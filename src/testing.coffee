@@ -2,6 +2,7 @@ class BDS.Testing
 
     constructor: () ->
         @test_heaps()
+        @test_DoubleLinkedList()
 
         console.log("All tests have passed!")
         document.getElementById("text").innerHTML = "All Tests Have Passed!";
@@ -11,6 +12,7 @@ class BDS.Testing
         if !b
             err = new Error()
             console.log(err.stack)
+            debugger
             throw new Error("Assertion Failed!")
 
     test_heaps: () ->
@@ -64,6 +66,74 @@ class BDS.Testing
             @ASSERT(sorted[i] < sorted[i + 1])
 
         return
+
+    test_DoubleLinkedList: () ->
+
+        list = new BDS.DoubleLinkedList()
+        @ASSERT(list.size() == 0)
+        @ASSERT(list.isEmpty())
+
+        list.add(5)
+        @ASSERT(list.size() == 1)
+        @ASSERT(!list.isEmpty())
+
+        list.append([0, 1, 2, 3, 4, 5, 6])
+        @ASSERT(list.size() == 8)
+        @ASSERT(list.pop_front() == 5)
+
+        for i in [0...7]
+            @ASSERT(list.size() == 7 - i)
+            @ASSERT(list.pop_front() == i)
+
+        list.append([7, 6, 5, 4, 3, 2, 1, 0])
+        
+        # Idiosyncratic pushes and pops.
+        list.push(5)
+        @ASSERT(list.pop() == 5)
+        list.push(7)
+        @ASSERT(list.pop() == 7)
+
+        for i in [0...8]
+            @ASSERT(list.size() == 8 - i)
+            @ASSERT(list.pop() == i)
+
+        @ASSERT(list.isEmpty())
+
+        # Test clear.
+        list.append([7, 6, 5, 4, 3, 2, 1, 0])
+        @ASSERT(list.size() == 8)
+        list.clear()
+        @ASSERT(list.isEmpty())
+
+        for i in [0...1000]
+            list.add(i)
+
+        # Test forwards iteration.
+        iter = list.begin()
+        i = 0
+        while(iter.hasNext())
+            @ASSERT(iter.next() == i)
+            i++
+
+        # Test backwards iteration.
+        iter = list.end()
+        while(iter.hasPrev())
+            i--
+            @ASSERT(iter.prev() == i)
+
+        iter = list.begin()
+        i = 0
+        while(iter.hasNext())
+            # Remove odd numbers
+            if iter.next() % 2 == 1
+                iter.remove()
+            i++
+
+        iter = list.begin()
+        i = 0
+        while(iter.hasNext())
+           @ASSERT(iter.next() == i)
+           i += 2
 
 
 new BDS.Testing()
