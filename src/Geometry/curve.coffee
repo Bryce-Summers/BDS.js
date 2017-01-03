@@ -12,7 +12,7 @@
 #
 # Currently we are implementing this as a reduction to THREE.CatmullRomCurve3, but we may remove the dependancy if we have time and go sufficiently beyond it.
 # FIXME: Sandardize the curve class and instantiate it from interfacial curves.
-class TSAG.S_Curve
+class BDS.S_Curve
 
     constructor: () ->
 

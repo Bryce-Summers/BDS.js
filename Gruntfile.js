@@ -19,7 +19,7 @@ module.exports = function (grunt) {
     concat: {
         options: {
             separator: '\n',
-            banner: '/*! Sim Urban, a project by Bryce Summers.\n *  Single File concatenated by Grunt Concatenate on <%= grunt.template.today("dd-mm-yyyy") %>\n */\n'
+            banner: '/*! Bryce Data Structures, a project by Bryce Summers.\n *  Single File concatenated by Grunt Concatenate on <%= grunt.template.today("dd-mm-yyyy") %>\n */\n'
         },
         dist: {
             // Include one level down, two levels down, three levels down, then main
@@ -59,6 +59,6 @@ module.exports = function (grunt) {
     grunt.task.run('concat');
 
     // Rebuild the files everytime they are modified.
-    grunt.task.run('watch');
+    //grunt.task.run('watch');
   });
 };

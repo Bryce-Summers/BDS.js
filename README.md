@@ -6,7 +6,9 @@ These structures are designed to be as general purpose as possible.
 
 #Usage:
 
-
+# Installation
+Open up a terminal or command prompt and run 
+npm install
 
 
 # Building

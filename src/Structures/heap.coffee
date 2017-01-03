@@ -33,14 +33,14 @@ class BDS.Heap
     # Comparator is a function (elem1, elem2) -> bool, which returns true if elem1 <= elem2
     constructor: (data_in, comparator) ->
 
+        @_LE = comparator
+
         if !data_in
             @_data = []
         else
             # Clone input array.
             @_data = data_in.slice(0)
             @_heapify()
-
-        @_LE = comparator
 
     # -- Public interface functions.
     size: () ->
@@ -67,7 +67,7 @@ class BDS.Heap
         return @_data[0]
 
     # O(log(n)) deletes and returns the minimum element.
-    del: () ->
+    dequeue: () ->
 
         # Trivial 1 element heap.
         if@_data.length == 1
@@ -88,6 +88,11 @@ class BDS.Heap
     toArray: () ->
         # Clone data array.
         return @_data.slice(0)
+
+    # Takes an index in [0, size) and returns that element.
+    # Mainly useful for iteration.
+    getElem: (index) ->
+        return @_data[index]
     
     # -- Private functions.
     
@@ -99,8 +104,10 @@ class BDS.Heap
     ###
     _heapify: () ->
 
-        for i in [@_data.size - 1 .. 0] #(int i = data.size() - 1; i >= 0; i--)
+        for i in [@_data.length - 1 .. 0] #(int i = data.size() - 1; i >= 0; i--)
             @sift_down(i)
+
+        return
         
 
     ###
@@ -213,11 +220,11 @@ class BDS.Heap
     
     clone: () ->
     
-        return new BDS.Heap(@_data)
+        return new BDS.Heap(@_data, @_LE)
     
     
     # Returns a UBA that is sorted from least to greatest.
-    toSortedUBA: () ->
+    toSortedArray: () ->
 
         len = @_data.length
         output = []
@@ -226,6 +233,9 @@ class BDS.Heap
         
         for i in [0...len]
 
-            output.push(heap.del())
+            output.push(heap.dequeue())
 
         return output
+
+    clear: () ->
+        @_data = []

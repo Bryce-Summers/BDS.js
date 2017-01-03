@@ -13,7 +13,7 @@
 # Note: I've decided to make this a 2D BVH supporting class only.
 #
 
-class TSAG.S_AABVH
+class BDS.S_AABVH
 
     # Contructed from the tree rooted at the given THREE.Object3D node.
     # Obj can alternatively be a list of Triangles with pointers to their mesh objects.

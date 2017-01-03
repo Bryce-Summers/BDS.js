@@ -4,6 +4,8 @@ class BDS.Testing
         @test_heaps()
 
         console.log("All tests have passed!")
+        document.getElementById("text").innerHTML = "All Tests Have Passed!";
+        
 
     ASSERT: (b) ->
         if !b
@@ -23,20 +25,45 @@ class BDS.Testing
         @ASSERT(h1.size() == 0)
 
         h1.append([1, 3, 5, 7, 9, 0, 8, 4, 6, 2])
-        console.log(h1)
+
+        # Test Ordering and sorted array output.
+        sorted = h1.toSortedArray()
+        for i in [0...10] by 1
+            @ASSERT(sorted[i] == i)
         
         @ASSERT(!h1.isEmpty())
         @ASSERT(h1.size() == 10)
         
-        for i in [0...10]
+        for i in [0...10] by 1
         
-            console.log("Iteration i = " + i)
-            console.log(h1)
             @ASSERT(h1.size() == 10 - i)
             @ASSERT(h1.peek() == i)
-            @ASSERT(h1.del() == i)
+            @ASSERT(h1.dequeue() == i)
         
         @ASSERT(h1.isEmpty())
+
+        # Test out a random array.
+        random_array = []
+        len = 10000
+        for i in [0 ... len] by 1
+            random_array.push(Math.random())
+
+        # Test out clear and append.
+        h1.clear()
+        h1.append(random_array)
+        sorted = h1.toSortedArray()
+
+        for i in [0...len - 1] by 1
+            @ASSERT(sorted[i] < sorted[i + 1])
+
+        # Test out heapify with a large array.
+        h1 = new BDS.Heap(random_array, LE)
+        sorted = h1.toSortedArray()
+
+        for i in [0...len - 1] by 1
+            @ASSERT(sorted[i] < sorted[i + 1])
+
+        return
 
 
 new BDS.Testing()
