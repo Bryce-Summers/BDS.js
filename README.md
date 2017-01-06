@@ -20,6 +20,11 @@ npm install
 
 3. Automatically compile the coffeescript code to javascript in one terminal:
  coffee -o lib/ -cw src/
+
+compile once with coffee -o lib/ -c src/
+-o is out, -c is compile, -w is watch.
+
+
 4. In the other you can automatically inject all of the source code links into the html file:
  npm install
  grunt
