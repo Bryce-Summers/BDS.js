@@ -21,7 +21,7 @@ class BDS.BVH2D
             xy = {val: 'x'}
 
         # Array of THREE.mesh objects.
-        @_leafs = []
+        #@_leafs = []
         @_leaf_node = false
 
         # Ensure that all of these polygons have bounding boxes.
@@ -32,6 +32,7 @@ class BDS.BVH2D
         if polygons.length < 4
             @_leaf_node = true
             for i in [0...polygons.length]
+                @_leafs = []
                 @_leafs.push(polygons[i])
             return
 
@@ -159,31 +160,11 @@ class BDS.BVH2D
 
         return [left, right]
 
-    # Ensures that all meshes have valid computed bounding boxes.
+    # Ensures that all polygons have a current valide Bounding Box.
     _ensure_bounding_boxes: (polygon_list) ->
         
-        len = polygon_list.length
-        for i in [0...len]
-            polygon = polygon_list[i]
-
-            if not polygon
-                err = new Error()
-                console.log(err.stack)
-                debugger
-                throw new Error("BSD.BVH: Polygon is missing a bounding box.")
-
-            if not polygon.boundingBox
-                @_computeBoundingBox(polygon)
-
-    _computeBoundingBox: (polygon) ->
-        AABB = new BDS.Box()
-
-        len = polygon.size()
-        for i in [0...len]
-            pt = polygon.getPoint(i)
-            AABB.expandByPoint(pt)
-
-        polygon.setBoundingBox(AABB)
+        for polygon in polygon_list
+            polygon.generateBoudingBox()
 
     # Computes the axis aligned bounding box minnimally bounding the given
     # list of meshes.
@@ -215,19 +196,70 @@ class BDS.BVH2D
 
         return sxy + sxz + syz # Note: There is not need to multiply this by 2 for a heuristic measure.
 
-    # returns the polygon T at the given location on the 2D plane.
-    # T.mesh returns the mesh. T.model returns the M_xxx object representing information for this particular polygon.
-    # T.mesh.element returns the E_xxx element object.
+    # Returns the first closed polygon that is found.
+    # ignores unclosed polylines.
     # returns null otherwise.
     # It is advisable that any meshes used for queries be used with ways of getting
     # to the classes that you are interested in, such as a @model attribute.
-    query_point: (x, y) ->
+    query_point: (pt) ->
 
-        debugger
-        throw new Error("FIXME")
+        # Check leaf nodes, narrow-phase collision detection.
+        if @_leaf_node
+            for polygon in @_leafs
+                if polygon.isClosed() and polygon.containsPoint(pt)
+                    return line
+            return null
 
-        ray = new THREE.Ray(new THREE.Vector3(x, y, 10), new THREE.Vector3(0, 0, 1))
-        return @query_ray(ray)
+        # Check children.
+        if @_AABB.containsPoint(pt)
+            result = @_left.query_point(pt, output_list)
+            return result if result != null
+
+            result = @_right.query_point(pt)
+            return result
+
+        # Broad phase no-collision.
+        return null
+
+    # returns a list of all closed polygons at the given location on the 2D plane.
+    # ignores unclosed polylines.
+    # returns null otherwise.
+    # It is advisable that any meshes used for queries be used with ways of getting
+    # to the classes that you are interested in, such as a @model attribute.
+    query_point_all: (pt, output_list) ->
+
+        if output_list == undefined
+            output_list = []
+
+        # Check leaf nodes, narrow-phase collision detection.
+        if @_leaf_node
+            for polygon in @_leafs
+                if polygon.isClosed() and polygon.containsPoint(pt)
+                    output_list.push(polygon)
+            return output_list
+
+        # Check children.
+        if @_AABB.containsPoint(pt)
+            @_left.query_point_all(pt, output_list)
+            @_right.query_point_all(pt, output_list)
+
+        return output_list
+
+
+    # Returns all polylines that intersect or lie within the given box.
+    # Returns all closed polygons that enclose aread within the given box.
+    query_box_all: (box, output_list) ->
+
+        if output_list == undefined
+            output_list = []
+
+        if @_leaf_node
+            for polygon in @_leafs
+                AABB = polygon.getBoundingBox()
+
+                # First test for intersection of bounding boxes.
+                if box.intersects_box(AABB) # IMPLEMENT INTERSECTs box and box intersection.
+                    throw new ERROR("Continue here tommorrow.")
 
 
     # Returns a complete list of Polylines, representing the bounding boxes of this Bounding Volume Hiearchy.

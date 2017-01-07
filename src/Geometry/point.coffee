@@ -7,7 +7,7 @@ Implements Arithmetic.
 
 add, sub, multScalar
 ###
-
+BDS.newDirection = (x, y, z) -> new BDS.Point(x, y, z)
 class BDS.Point
 
     constructor : (@x, @y, @z) ->
@@ -80,3 +80,23 @@ class BDS.Point
         out.y = Math.max(@y, pt.y)
         out.z = Math.max(@z, pt.z)
         return out
+
+    normalize: () ->
+        return @divScalar(@norm())
+
+    dot: (pt) ->
+        return pt.x*@x + pt.y*@y + pt.z*@z
+
+    # returns true iff this point is less than the input point on every dimension.
+    lessThan: (pt) ->
+        return @x < pt.x and @y < pt.y and @z < pt.z
+
+    lessThanOrEqual: (pt) ->
+        return @x <= pt.x and @y <= pt.y and @z <= pt.z
+
+    # returns true iff this point is greater than the input point on ever dimension.
+    greaterThan: (pt) ->
+        return @x > pt.x and @y > pt.y and @z > pt.z
+
+    greaterThanOrEqual: (pt) ->
+        return @x >= pt.x and @y >= pt.y and @z >= pt.z

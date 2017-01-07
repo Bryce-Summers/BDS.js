@@ -29,3 +29,16 @@ class BDS.Box
         out.min = @min.min(box.min)
         out.max = @max.max(box.max)
         return out
+
+    containsPoint: (pt) ->
+
+        return pt.greaterThanOrEqual(@min) and pt.lessThanOrEqual(@max)
+
+    getRandomPointInBox: () ->
+        range = @max.sub(@min)
+
+        x = @min.x + Math.random()*range.x
+        y = @min.y + Math.random()*range.y
+        z = @min.z + Math.random()*range.z
+
+        return new BDS.Point(x, y, z)
