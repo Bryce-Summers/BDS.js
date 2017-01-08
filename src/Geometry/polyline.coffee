@@ -6,6 +6,9 @@ Written by Bryce Summers on 1 - 4 - 2017.
 Note: Closed Polylines are polygons...
  - So we will put all of our polygon code into this class.
 
+Note: this class assumes that it contains at least 1 point for collision tests.
+
+Note: Polyline <--> polyline intersection tests assume that the polyline is not self intersecting.
 ###
 
 class BDS.Polyline
@@ -16,10 +19,17 @@ class BDS.Polyline
         if @_isClosed == undefined
             @_isClosed = false
 
+        # Stores whether this polyline is really a polygon and contains its inner area.
+        @_isFilled = @_isClosed
+
         @_points = []
 
         if points_in
             @appendPoints(points_in)
+
+        # Bounding box will be valid as long as no points are removed.
+        # If a point is removed, then a valid bounding box may have to be regenerated.
+        @generateBoundingBox()
 
         ###
         # These are commented out to save memory for applications that don't need these.
@@ -37,6 +47,7 @@ class BDS.Polyline
 
     addPoint: (p) ->
         @_points.push(p)
+        @_boundingbox.expandByPoint(p)
         return
 
     removeLastPoint: () ->
@@ -51,6 +62,9 @@ class BDS.Polyline
 
     isClosed: () ->
         return @_isClosed
+
+    isFilled: () ->
+        return @_isFilled
 
     ###
     * http://math.blogoverflow.com/2014/06/04/greens-theorem-and-area-of-polygons/
@@ -130,7 +144,11 @@ class BDS.Polyline
         return output
 
     # Returns a list of line segments for intersection tests.
-    _toLineSegments: () ->
+    _toLineSegments: (start_index) ->
+
+        if start_index == undefined
+            start_index = 0
+
         output = []
 
         len = @_points.length
@@ -175,3 +193,43 @@ class BDS.Polyline
                 #count++
 
         return odd
+
+    detect_intersection_with_box: (box) ->
+
+        # No intersection if the bounding box doesn't intersect the input box.
+        if not box.intersects_box(@_boundingbox)
+            return true
+
+        # Filled polyline and contains entire box.
+        if @isFilled() and @containsPoint(box.min)
+            return true
+
+        # Filled box that contains entire polyline.
+        if box.isFilled() and box.containsPoint(@_points[0])
+            return true
+
+        # No perform a polyline <---> polyline intersection test.
+        polyline = box.toPolyline()
+
+        return @detect_intersection_with_polyline(polyline)
+
+    # Returns true iff there is an intersection between a line segment in this polyline
+    # and a line segment in the input polyline.
+    # We are currently reducing this to line segment set intersection detection. O((smaller + larger)*log(smaller + larger))
+    # We may be able to do better if we test the smaller polyline's segments against the larger's bvh. O(smaller*log(larger))
+    detect_intersection_with_polyline: (polyline) ->
+
+        # Convert both polylines to line segments.
+        index1 = 0
+        lines1 = @_toLineSegments(index1)
+        index2 = line1.length
+        lines2 = @_toLineSegments(index2)
+
+        all_lines = lines1.concat(lines2)
+
+        intersector = new BDS.Intersector()
+
+        #non_intersection_indices specify the beginings of ranges that won't be intersected with each other.
+        # They are used to make sure we don't detect internal intersections in self-intersecting polyline's
+        params = {lines: lines, non_intersection_indices: [index1, index2]}
+        return intersector.detect_intersection_line_segments(params)

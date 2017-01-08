@@ -13,7 +13,7 @@ class BDS.Intersector
     constructor: () ->
 
     ###
-    Calls the Line.ntersect method on all intersecting lines.
+    Calls the Line.intersect method on all intersecting lines.
     Does not treat lines that intersect at common points as intersecting.
     # takes arrays of BDS.Line objects.
     BDS.Line[] -> () [intersection sideeffects]
@@ -41,12 +41,63 @@ class BDS.Intersector
             switch (event.type)
             
                 when BDS.Intersector.Event.ENTER
-                    tupleSet.addTuple(event.tuple2, i)
+                    tuple = event.tuple2
+                    tuple.id = i # Set ID.
+                    tupleSet.intersect_with_line(tuple.line)
+                    tupleSet.addTuple(tuple)
                     continue
 
                 when BDS.Intersector.Event.EXIT
                     tupleSet.removeTuple(event.tuple2)
                     continue
+
+        return
+
+    ###
+    Returns true iff there is at least one valid intersection detected in the input set of polylines.
+    Does not treat lines that intersect at common points as intersecting.
+    params = {lines: lines, non_intersection_indices: [i1, i2, ...]}
+    non_intersection_indices demarcate ranges of indices that should not be intersected against each other.
+    Assumes that the indices are in rted order.
+    ###
+    detect_intersection_line_segments: (params) ->
+
+        # Stores all of the line enter and exit events.
+        event_queue = new BDS.Intersector.EventPQ(params.lines)
+
+        # Stores all of the lines currently spanning the sweep line.
+        # We can use a heap for intersection tests across all of the lines and easy deletion of the exiting events.
+        # or we can use a Binary search tree where we can furthur bound the possible intersections in a second dimension.
+        # I am currently using a simpler heap approach, which is easier to implement.
+        # We will assign tuples based on exit locations.
+        tupleSet   = new BDS.Intersector.LineTupleSet()
+
+        len = event_queue.size()
+
+        #while(!event_queue.isEmpty())
+        # Process every entrance and exit event.
+        for i in [0...len] by 1#(int i = 0; i < len; i++)
+
+            event = event_queue.delMin()
+
+            switch (event.type)
+            
+                when BDS.Intersector.Event.ENTER
+                    tuple = event.tuple2
+                    tuple.id = i # Set ID.
+
+                    # Return true as there is a valid intersection that is detected.
+                    if tupleSet.detect_intersection_with_line(tuple.line, params)
+                        return true
+
+                    tupleSet.addTuple(tuple)
+                    continue
+
+                when BDS.Intersector.Event.EXIT
+                    tupleSet.removeTuple(event.tuple2)
+                    continue
+
+        return
 
     ###
     Slower, but more robust version of intersect.
@@ -230,18 +281,10 @@ class BDS.Intersector.LineTupleSet
 
         @heap = new BDS.Heap([], BDS.Intersector.LineTuple_Comparator)
 
-    addTuple: (line_tuple, id) ->
-
-        line_tuple.id = id
-        input_line = line_tuple.line
-        
-        len = @heap.size()
-        for i in [0...len]
-            tuple = @heap.getElem(i)
-            line_crossing_sweep = tuple.line
-            input_line.intersect(line_crossing_sweep)
+    addTuple: (line_tuple) ->
 
         @heap.add(line_tuple)
+
 
     removeTuple: (line_tuple) ->
 
@@ -251,6 +294,22 @@ class BDS.Intersector.LineTupleSet
             throw new Error("ERROR: line_tuple exit ordering is messed up!")
 
         return tuple
+
+    # Calls BDS.Line.intersect() on every possible line in this set that could intersect the input_line.
+    intersect_with_line: (input_line) ->
+        
+        len = @heap.size()
+        for i in [0...len]
+            tuple = @heap.getElem(i)
+            line_crossing_sweep = tuple.line
+            input_line.intersect(line_crossing_sweep)
+
+    # params = {lines: all_lines, non_intersection_indices: [i1, i2, ...]}
+    # ASSUMES non_intersection_indices are sorted.
+    detect_intersection_with_line: (input_line, params) ->
+
+
+            
 
 # These objects represent events along the sweep line.
 class BDS.Intersector.Event

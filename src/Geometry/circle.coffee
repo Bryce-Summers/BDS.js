@@ -12,6 +12,8 @@ class BDS.Circle
         if @filled == undefined
             @filled = false
 
+    isFilled: () -> @filled
+
     #detect_intersection_with_ray: (ray) ->
 
     # Returns the minnimum positive time that this circle intersects the given ray.

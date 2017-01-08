@@ -246,9 +246,8 @@ class BDS.BVH2D
         return output_list
 
 
-    # Returns all polylines that intersect or lie within the given box.
-    # Returns all closed polygons that enclose aread within the given box.
-    query_box_all: (box, output_list) ->
+    # Returns all BDS.polylines that intersect the given box.
+    query_box_all: (query_box, output_list) ->
 
         if output_list == undefined
             output_list = []
@@ -257,10 +256,18 @@ class BDS.BVH2D
             for polygon in @_leafs
                 AABB = polygon.getBoundingBox()
 
-                # First test for intersection of bounding boxes.
-                if box.intersects_box(AABB) # IMPLEMENT INTERSECTs box and box intersection.
-                    throw new ERROR("Continue here tommorrow.")
+                # Now output the polygon if it intersects with the box.
+                if polygon.detect_intersection_with_box(query_box)
+                    output_list.push(query_box)
 
+        # Check children.
+        if @_AABB.intersects_box(query_box)
+            @_left.query_box_all(query_box)
+            @_right.query_box_all(query_box)
+
+        return  output_list
+
+    # query_circle_all --> reduces to query box all, then filter via narrow pass.
 
     # Returns a complete list of Polylines, representing the bounding boxes of this Bounding Volume Hiearchy.
     # () -> BDS.Polyline[]
