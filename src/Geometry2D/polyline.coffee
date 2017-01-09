@@ -110,11 +110,6 @@ class BDS.Polyline
 
     getBoundingBox: () -> @_boundingbox
 
-    # Generates a BVH for this polyline.
-    # () -> BDS.BVH2D
-    generateBVH: () ->
-        segments  = @toPolylineSegments();
-        @_lineBVH = new BDS.BVH2(segments);
 
     setAssociatedData: (obj) ->
         @_obj = obj
@@ -128,8 +123,12 @@ class BDS.Polyline
     ###
 
     # Returns a list of Polylines, representing all of this polyline's line segments.
-    toPolylineSegments: () ->
-        output = []
+    # Returns them in halfedge order, with each segment is stored at the same index as its originating point.
+    # output array is optional.
+    toPolylineSegments: (output) ->
+        
+        if output == undefined
+            output = []
 
         len = @_points.length
         for i in [0...len - 1]
@@ -165,6 +164,27 @@ class BDS.Polyline
             output.push(line)
 
         return output
+
+    toRays: (output) ->
+
+        if output == undefined
+            output = []
+
+        len = @_points.length
+        for i in [0...len - 1]
+            p0 = @_points[i]
+            p1 = @_points[i + 1]
+            dir = p1.sub(p0)
+            output.push(new BDS.Ray(p0, dir))
+
+        # Add the last point.
+        if @_isClosed
+            p0 = @_points[len - 1]
+            p1 = @_points[0]
+            dir = p1.sub(p0)
+            output.push(new BDS.Ray(p0, dir))
+
+        return output        
 
     # Performs a point in Polygon test.
     # Assumes this is a closed polygon.

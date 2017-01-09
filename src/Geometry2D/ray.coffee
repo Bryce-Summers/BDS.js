@@ -8,10 +8,19 @@ Purpose:
 
 class BDS.Ray
 
+    # Originating location, the direction the ray is going.
+    # And an option time scale factor that may be used in various applications that want to compute intersections over a bounded area
+    # or care about the distance a ray has travelled.
+    constructor: (point, @dir, @_time_scale) ->
 
-    constructor: (point, @dir) ->
+        if @_time_scale == undefined
+            # By default, the user probably cares most about the magnitude of the orignal ray.
+            @_time_scale = @dir.norm()
 
-        @dir = @dir.normalize()
+            # If we do this then to save time, we compute the normalized direction without recomputing the euclidean norm.
+            @dir = @dir.divScalar(@_time_scale)
+        else
+            @dir = @dir.normalize()
 
         # Useful data for splitting lines by rays.
         @p1 = point
@@ -23,7 +32,10 @@ class BDS.Ray
 
     # Gurantted to return a normalized direction vector.
     getDirection: () ->
-        return @dir.normalize();
+        return @dir
+
+    getTimeScale: () ->
+        return @_time_scale
 
     # BDS.Line -> bool
     detect_intersection_with_line: (line) ->

@@ -247,6 +247,7 @@ class BDS.BVH2D
 
 
     # Returns all BDS.polylines that intersect the given box.
+    # output_list is optional.
     query_box_all: (query_box, output_list) ->
 
         if output_list == undefined

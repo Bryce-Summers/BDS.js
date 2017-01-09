@@ -68,17 +68,33 @@ class BDS.Circle
 
     
     #detect_intersection with line segment
-    detect_intersection_with_line: (line) ->
+    detect_intersection_with_polyline: (polyline) ->
 
-        in1 = @containsPoint(line.p1)
-        in2 = @containsPoint(line.p1)
+        return false if polyline.size < 1
 
-        # Filled, intersection if either point is in the circle.
-        return true if @filled and (in1 or in2)
+        # Handle entire polyline inside of circle.
+        if @filled             
+            pt = polyline.getPoint(0)
+            return true if @containsPoint(pt)
 
-        # in1 xor in2
-        return (in1 and not in2) or
-               (not in1 and in2)
+        # Entire circle is inside of polyline.
+        if polyline.isFilled()
+            return true if polyline.containsPoint(@_center)
+
+        # Check for an intersection of the boundaries.
+        rays = polyline.toRays();
+
+        # Check for ray - circle intersection within the time bounds of the polyline's segments.
+        for ray in rays
+            intersection_time = @minnimum_time_of_intersection_with_ray(ray)
+
+            # NOTE: the ray's timescale indicates an upper bound on the extent of the segments.
+            if intersection_time != null and intersection_time < ray.getTimeScale()
+                return true
+
+            continue
+
+        return false
 
     # BDS.Point
     containsPoint: (pt) ->
