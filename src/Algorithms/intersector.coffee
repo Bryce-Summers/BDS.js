@@ -28,7 +28,7 @@ class BDS.Intersector
         # or we can use a Binary search tree where we can furthur bound the possible intersections in a second dimension.
         # I am currently using a simpler heap approach, which is easier to implement.
         # We will assign tuples based on exit locations.
-        tupleSet   = new BDS.Intersector.LineTupleSet()
+        sweepSet   = new BDS.Intersector.LineSweepSet()
 
         len = event_queue.size()
 
@@ -41,16 +41,14 @@ class BDS.Intersector
             switch (event.type)
             
                 when BDS.Intersector.Event.ENTER
-                    tuple = event.tuple2
-                    tuple.id = i # Set ID.
-                    tupleSet.intersect_with_line(tuple.line)
-                    tupleSet.addTuple(tuple)
+                    line = event.line
+                    sweepSet.intersect_with_line(line)
+                    sweepSet.add(event.twin)# Add the cooresponding exit event.
                     continue
 
                 when BDS.Intersector.Event.EXIT
-                    tupleSet.removeTuple(event.tuple2)
+                    sweepSet.remove(event)
                     continue
-
         return
 
     ###
@@ -65,12 +63,8 @@ class BDS.Intersector
         # Stores all of the line enter and exit events.
         event_queue = new BDS.Intersector.EventPQ(lines)
 
-        # Stores all of the lines currently spanning the sweep line.
-        # We can use a heap for intersection tests across all of the lines and easy deletion of the exiting events.
-        # or we can use a Binary search tree where we can furthur bound the possible intersections in a second dimension.
-        # I am currently using a simpler heap approach, which is easier to implement.
-        # We will assign tuples based on exit locations.
-        tupleSet   = new BDS.Intersector.LineTupleSet()
+        # Stores the exit events cooresponding to lines currently spanning the sweep line.
+        sweepSet   = new BDS.Intersector.LineSweepSet()
 
         len = event_queue.size()
 
@@ -83,17 +77,17 @@ class BDS.Intersector
             switch (event.type)
             
                 when BDS.Intersector.Event.ENTER
-                    tuple = event.tuple2
+                    line = event.line
 
                     # Return true as there is a valid intersection that is detected.
-                    if tupleSet.detect_intersection_with_line_partitioned(tuple.line, partition_indices)
+                    if sweepSet.detect_intersection_with_line_partitioned(line, partition_indices)
                         return true
 
-                    tupleSet.addTuple(tuple)
+                    sweepSet.add(event.twin)
                     continue
 
                 when BDS.Intersector.Event.EXIT
-                    tupleSet.removeTuple(event.tuple2)
+                    sweepSet.remove(event)
                     continue
 
         return false
@@ -134,6 +128,7 @@ class BDS.Intersector.EventPQ
             p1 = line.p1;
             p2 = line.p2;
 
+            # Sort into enter and exit events.
             # Enter at least x coordinate.
             # Exit at greatest x coordinate.
             # We are assuming that there are no vertical lines.
@@ -169,22 +164,14 @@ class BDS.Intersector.EventPQ
         exit.x = p2.x
         exit.y = p2.y
 
-        line_tuple = new BDS.Intersector.LineTuple()
-        line_tuple.x = p1.x
-        line_tuple.y = p1.y
-        line_tuple.line = line
-        line_tuple.id = id
+        enter.line = line
+        exit.line  = line
 
-        line_tuple2 = new BDS.Intersector.LineTuple()
-        line_tuple2.x = p2.x
-        line_tuple2.y = p2.y
-        line_tuple2.line = line
-        line_tuple2.id = id
+        enter.id = id
+        exit.id  = id
 
-        enter.tuple1 = line_tuple
-        enter.tuple2 = line_tuple2
-        exit.tuple1  = line_tuple
-        exit.tuple2  = line_tuple2
+        enter.twin = exit
+        exit.twin  = enter
     
     delMin: () ->
 
@@ -205,13 +192,13 @@ BDS.Intersector.Event_Comparator = (e1, e2) ->
     # Note: tuples are only used for equality and id's, not for position data.
 
     # Equal.
-    if e1.tuple1 == e2.tuple1 and
+    if e1.line == e2.line and
        e1.type == e2.type
         return true
 
     # Equal, but opposite events.
     # Put the enter event first.
-    if e1.tuple1 == e2.tuple1
+    if e1.line == e2.line
         return e1.type == BDS.Intersector.Event.ENTER
 
     # Differentiate by x location, then y location.
@@ -232,82 +219,42 @@ BDS.Intersector.Event_Comparator = (e1, e2) ->
         return false
 
     # If we have to enter or exit events at the same location, then we differentiate by arbitrary id.
-    if (e1.tuple2.id) <= (e2.tuple2.id)
+    if (e1.id) <= (e2.id)
 
         return true
 
     return false
 
-
-# Used to impose an ordering for the tuples in the bst.
-# Returns true if e1 <= e2.
-BDS.Intersector.LineTuple_Comparator = (e1, e2) ->
-
-    # Equal.
-    if (e1 == e2)
-        return true
-
-    return true  if (e1.x) < (e2.x)
-    return false if (e1.x) > (e2.x)
-    
-    return true  if (e1.y) < (e2.y)
-    return false if (e1.y) > (e2.y)
-
-    # I want to ensure a coorespondence with events in each heap.
-    # So I am using these id's to resolve duplicate points.
-    return e1.id <= e2.id
-
-
-###
-Line Tuples are stored in a binary search tree to
-represent the lines currently crossing the sweep line.
-###
-class BDS.Intersector.LineTuple
-
-    constructor: () ->
-
-        # Every LineTuple is associated with one line.
-        @line = null
-
-        # Used to correctly order the y tuples by y coordinate.
-        @x = null
-        @y = null
-
-        # Used to resolve ties.
-        @id = null
-
-
 # Represents the set up tuples currently crossing a sweepline. Intersection routines are handled within this class.
-class BDS.Intersector.LineTupleSet
+class BDS.Intersector.LineSweepSet
 
     constructor: () ->
 
-        @heap = new BDS.Heap([], BDS.Intersector.LineTuple_Comparator)
+        @heap = new BDS.Heap([], BDS.Intersector.Event_Comparator)
 
-    addTuple: (line_tuple) ->
+    add: (event) ->
 
-        @heap.add(line_tuple)
+        @heap.add(event)
 
+    remove: (event_to_be_removed) ->
 
-    removeTuple: (line_tuple) ->
+        my_event = @heap.dequeue()
 
-        tuple = @heap.dequeue()
+        if my_event != event_to_be_removed
+            err = new Error("ERROR: line_tuple exit ordering is messed up!")
+            console.log(err.stack)
+            debugger
+            throw new err
 
-        if tuple != line_tuple
-            err = new Error();
-            console.log(err.stack);
-            debugger;
-            throw new Error("ERROR: line_tuple exit ordering is messed up!")
-
-        return tuple
+        return my_event
 
     # Calls BDS.Line.intersect() on every possible line in this set that could intersect the input_line.
     intersect_with_line: (input_line) ->
         
         len = @heap.size()
         for i in [0...len]
-            tuple = @heap.getElem(i)
-            line_crossing_sweep = tuple.line
+            event = @heap.getElem(i)
+            line_crossing_sweep = event.line
             input_line.intersect(line_crossing_sweep)
 
     # Returns truee if their is an intersection between two lines from seperate point lists.
@@ -316,8 +263,8 @@ class BDS.Intersector.LineTupleSet
 
         len = @heap.size()
         for i in [0...len]
-            tuple = @heap.getElem(i)
-            line_crossing_sweep = tuple.line
+            event = @heap.getElem(i)
+            line_crossing_sweep = event.line
             
             # Same Partition, ignore this pair.
             if line_crossing_sweep.points == input_line.points
@@ -333,8 +280,8 @@ class BDS.Intersector.LineTupleSet
 
         len = @heap.size()
         for i in [0...len]
-            tuple = @heap.getElem(i)
-            line_crossing_sweep = tuple.line
+            event = @heap.getElem(i)
+            line_crossing_sweep = event.line
 
             if input_line.detect_intersection(line_crossing_sweep)
                 return true
@@ -349,10 +296,10 @@ class BDS.Intersector.Event
 
     constructor: () ->
     
-        @tuple1 = null
-        @tuple2 = null
-
         @type = null
 
         @x = null
         @y = null
+
+        @id = null
+        @twin = null # Coutnerpart enter or exit event.

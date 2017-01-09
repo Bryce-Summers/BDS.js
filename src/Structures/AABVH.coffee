@@ -263,8 +263,8 @@ class BDS.BVH2D
 
         # Check children.
         if @_AABB.intersects_box(query_box)
-            @_left.query_box_all(query_box)
-            @_right.query_box_all(query_box)
+            @_left.query_box_all(query_box,  output_list)
+            @_right.query_box_all(query_box, output_list)
 
         return  output_list
 

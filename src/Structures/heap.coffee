@@ -104,7 +104,7 @@ class BDS.Heap
     ###
     _heapify: () ->
 
-        for i in [@_data.length - 1 .. 0] #(int i = data.size() - 1; i >= 0; i--)
+        for i in [@_data.length - 1 .. 0] by -1 #(int i = data.size() - 1; i >= 0; i--)
             @sift_down(i)
 
         return

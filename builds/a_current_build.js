@@ -67,21 +67,20 @@ features: Efficient Line Segment Intersection.
      */
 
     Intersector.prototype.intersectLineSegments = function(lines) {
-      var event, event_queue, i, j, len, ref, tuple, tupleSet;
+      var event, event_queue, i, j, len, line, ref, sweepSet;
       event_queue = new BDS.Intersector.EventPQ(lines);
-      tupleSet = new BDS.Intersector.LineTupleSet();
+      sweepSet = new BDS.Intersector.LineSweepSet();
       len = event_queue.size();
       for (i = j = 0, ref = len; j < ref; i = j += 1) {
         event = event_queue.delMin();
         switch (event.type) {
           case BDS.Intersector.Event.ENTER:
-            tuple = event.tuple2;
-            tuple.id = i;
-            tupleSet.intersect_with_line(tuple.line);
-            tupleSet.addTuple(tuple);
+            line = event.line;
+            sweepSet.intersect_with_line(line);
+            sweepSet.add(event.twin);
             continue;
           case BDS.Intersector.Event.EXIT:
-            tupleSet.removeTuple(event.tuple2);
+            sweepSet.remove(event);
             continue;
         }
       }
@@ -97,22 +96,22 @@ features: Efficient Line Segment Intersection.
      */
 
     Intersector.prototype.detect_intersection_line_segments_partitioned = function(lines, partition_indices) {
-      var event, event_queue, i, j, len, ref, tuple, tupleSet;
+      var event, event_queue, i, j, len, line, ref, sweepSet;
       event_queue = new BDS.Intersector.EventPQ(lines);
-      tupleSet = new BDS.Intersector.LineTupleSet();
+      sweepSet = new BDS.Intersector.LineSweepSet();
       len = event_queue.size();
       for (i = j = 0, ref = len; j < ref; i = j += 1) {
         event = event_queue.delMin();
         switch (event.type) {
           case BDS.Intersector.Event.ENTER:
-            tuple = event.tuple2;
-            if (tupleSet.detect_intersection_with_line_partitioned(tuple.line, partition_indices)) {
+            line = event.line;
+            if (sweepSet.detect_intersection_with_line_partitioned(line, partition_indices)) {
               return true;
             }
-            tupleSet.addTuple(tuple);
+            sweepSet.add(event.twin);
             continue;
           case BDS.Intersector.Event.EXIT:
-            tupleSet.removeTuple(event.tuple2);
+            sweepSet.remove(event);
             continue;
         }
       }
@@ -174,27 +173,18 @@ features: Efficient Line Segment Intersection.
     }
 
     EventPQ.prototype._populateEvent = function(enter, exit, p1, p2, line, id) {
-      var line_tuple, line_tuple2;
       enter.type = BDS.Intersector.Event.ENTER;
       exit.type = BDS.Intersector.Event.EXIT;
       enter.x = p1.x;
       enter.y = p1.y;
       exit.x = p2.x;
       exit.y = p2.y;
-      line_tuple = new BDS.Intersector.LineTuple();
-      line_tuple.x = p1.x;
-      line_tuple.y = p1.y;
-      line_tuple.line = line;
-      line_tuple.id = id;
-      line_tuple2 = new BDS.Intersector.LineTuple();
-      line_tuple2.x = p2.x;
-      line_tuple2.y = p2.y;
-      line_tuple2.line = line;
-      line_tuple2.id = id;
-      enter.tuple1 = line_tuple;
-      enter.tuple2 = line_tuple2;
-      exit.tuple1 = line_tuple;
-      return exit.tuple2 = line_tuple2;
+      enter.line = line;
+      exit.line = line;
+      enter.id = id;
+      exit.id = id;
+      enter.twin = exit;
+      return exit.twin = enter;
     };
 
     EventPQ.prototype.delMin = function() {
@@ -214,10 +204,10 @@ features: Efficient Line Segment Intersection.
   })();
 
   BDS.Intersector.Event_Comparator = function(e1, e2) {
-    if (e1.tuple1 === e2.tuple1 && e1.type === e2.type) {
+    if (e1.line === e2.line && e1.type === e2.type) {
       return true;
     }
-    if (e1.tuple1 === e2.tuple1) {
+    if (e1.line === e2.line) {
       return e1.type === BDS.Intersector.Event.ENTER;
     }
     if (e1.x < e2.x) {
@@ -238,88 +228,51 @@ features: Efficient Line Segment Intersection.
     if ((e1.type === BDS.Intersector.Event.ENTER) && (e2.type === BDS.Intersector.Event.EXIT)) {
       return false;
     }
-    if (e1.tuple2.id <= e2.tuple2.id) {
+    if (e1.id <= e2.id) {
       return true;
     }
     return false;
   };
 
-  BDS.Intersector.LineTuple_Comparator = function(e1, e2) {
-    if (e1 === e2) {
-      return true;
-    }
-    if (e1.x < e2.x) {
-      return true;
-    }
-    if (e1.x > e2.x) {
-      return false;
-    }
-    if (e1.y < e2.y) {
-      return true;
-    }
-    if (e1.y > e2.y) {
-      return false;
-    }
-    return e1.id <= e2.id;
-  };
-
-
-  /*
-  Line Tuples are stored in a binary search tree to
-  represent the lines currently crossing the sweep line.
-   */
-
-  BDS.Intersector.LineTuple = (function() {
-    function LineTuple() {
-      this.line = null;
-      this.x = null;
-      this.y = null;
-      this.id = null;
+  BDS.Intersector.LineSweepSet = (function() {
+    function LineSweepSet() {
+      this.heap = new BDS.Heap([], BDS.Intersector.Event_Comparator);
     }
 
-    return LineTuple;
-
-  })();
-
-  BDS.Intersector.LineTupleSet = (function() {
-    function LineTupleSet() {
-      this.heap = new BDS.Heap([], BDS.Intersector.LineTuple_Comparator);
-    }
-
-    LineTupleSet.prototype.addTuple = function(line_tuple) {
-      return this.heap.add(line_tuple);
+    LineSweepSet.prototype.add = function(event) {
+      return this.heap.add(event);
     };
 
-    LineTupleSet.prototype.removeTuple = function(line_tuple) {
-      var err, tuple;
-      tuple = this.heap.dequeue();
-      if (tuple !== line_tuple) {
-        err = new Error();
+    LineSweepSet.prototype.remove = function(event_to_be_removed) {
+      var err, my_event;
+      my_event = this.heap.dequeue();
+      if (my_event !== event_to_be_removed) {
+        err = new Error("ERROR: line_tuple exit ordering is messed up!");
         console.log(err.stack);
         debugger;
-        throw new Error("ERROR: line_tuple exit ordering is messed up!");
+        throw new err;
       }
-      return tuple;
+      return my_event;
     };
 
-    LineTupleSet.prototype.intersect_with_line = function(input_line) {
-      var i, j, len, line_crossing_sweep, ref, results, tuple;
+    LineSweepSet.prototype.intersect_with_line = function(input_line) {
+      var event, i, j, len, line_crossing_sweep, ref, results;
       len = this.heap.size();
       results = [];
       for (i = j = 0, ref = len; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
-        tuple = this.heap.getElem(i);
-        line_crossing_sweep = tuple.line;
+        event = this.heap.getElem(i);
+        line_crossing_sweep = event.line;
         results.push(input_line.intersect(line_crossing_sweep));
       }
       return results;
     };
 
-    LineTupleSet.prototype.detect_intersection_with_line_partitioned = function(input_line) {
-      var i, j, len, line_crossing_sweep, ref, tuple;
+    LineSweepSet.prototype.detect_intersection_with_line_partitioned = function(input_line) {
+      var event, i, j, len, line_crossing_sweep, ref;
       len = this.heap.size();
       for (i = j = 0, ref = len; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
-        tuple = this.heap.getElem(i);
-        line_crossing_sweep = tuple.line;
+        event = this.heap.getElem(i);
+        line_crossing_sweep = event.line;
         if (line_crossing_sweep.points === input_line.points) {
           continue;
         }
@@ -330,12 +283,12 @@ features: Efficient Line Segment Intersection.
       return false;
     };
 
-    LineTupleSet.prototype.detect_intersection_with_line = function(input_line) {
-      var i, j, len, line_crossing_sweep, ref, tuple;
+    LineSweepSet.prototype.detect_intersection_with_line = function(input_line) {
+      var event, i, j, len, line_crossing_sweep, ref;
       len = this.heap.size();
       for (i = j = 0, ref = len; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
-        tuple = this.heap.getElem(i);
-        line_crossing_sweep = tuple.line;
+        event = this.heap.getElem(i);
+        line_crossing_sweep = event.line;
         if (input_line.detect_intersection(line_crossing_sweep)) {
           return true;
         }
@@ -343,7 +296,7 @@ features: Efficient Line Segment Intersection.
       return false;
     };
 
-    return LineTupleSet;
+    return LineSweepSet;
 
   })();
 
@@ -353,11 +306,11 @@ features: Efficient Line Segment Intersection.
     Event.EXIT = 1;
 
     function Event() {
-      this.tuple1 = null;
-      this.tuple2 = null;
       this.type = null;
       this.x = null;
       this.y = null;
+      this.id = null;
+      this.twin = null;
     }
 
     return Event;
@@ -1541,8 +1494,8 @@ Purpose:
         return output_list;
       }
       if (this._AABB.intersects_box(query_box)) {
-        this._left.query_box_all(query_box);
-        this._right.query_box_all(query_box);
+        this._left.query_box_all(query_box, output_list);
+        this._right.query_box_all(query_box, output_list);
       }
       return output_list;
     };
@@ -1848,7 +1801,7 @@ Written by Bryce Summers on 11 - 2 - 2017.
 
     Heap.prototype._heapify = function() {
       var i, j, ref;
-      for (i = j = ref = this._data.length - 1; ref <= 0 ? j <= 0 : j >= 0; i = ref <= 0 ? ++j : --j) {
+      for (i = j = ref = this._data.length - 1; j >= 0; i = j += -1) {
         this.sift_down(i);
       }
     };
