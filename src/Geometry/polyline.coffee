@@ -9,27 +9,27 @@ Note: Closed Polylines are polygons...
 Note: this class assumes that it contains at least 1 point for collision tests.
 
 Note: Polyline <--> polyline intersection tests assume that the polyline is not self intersecting.
+
+FIXME: Return proper point in polyline tests for complemented filled polylines.
+
 ###
 
 class BDS.Polyline
 
     # FIXME: Maybe I should use BDS.Point_info's instead.
     # BDS.Point[], bool
-    constructor: (@_isClosed, points_in) ->
+    constructor: (@_isClosed, points_in, @_isFilled) ->
         if @_isClosed == undefined
             @_isClosed = false
 
         # Stores whether this polyline is really a polygon and contains its inner area.
-        @_isFilled = @_isClosed
+        if @_isFilled == undefined
+            @_isFilled = @_isClosed
 
         @_points = []
 
         if points_in
             @appendPoints(points_in)
-
-        # Bounding box will be valid as long as no points are removed.
-        # If a point is removed, then a valid bounding box may have to be regenerated.
-        @generateBoundingBox()
 
         ###
         # These are commented out to save memory for applications that don't need these.
@@ -47,7 +47,11 @@ class BDS.Polyline
 
     addPoint: (p) ->
         @_points.push(p)
-        @_boundingbox.expandByPoint(p)
+
+        # Expand the bounding box if it is defined.
+        if @_boundingbox
+            @_boundingbox.expandByPoint(p)
+
         return
 
     removeLastPoint: () ->
@@ -94,14 +98,12 @@ class BDS.Polyline
     # -> bool
     isComplemented: () -> 
         
-        return@computeArea() > 0
+        return @computeArea() > 0
 
     generateBoundingBox: (polygon) ->
         @_boundingbox = new BDS.Box()
 
-        len = polygon.size()
-        for i in [0...len]
-            pt = polygon.getPoint(i)
+        for pt in @_points
             @_boundingbox.expandByPoint(pt)
 
         return @_boundingbox
@@ -111,7 +113,7 @@ class BDS.Polyline
     # Generates a BVH for this polyline.
     # () -> BDS.BVH2D
     generateBVH: () ->
-        segments = @toPolylineSegments();
+        segments  = @toPolylineSegments();
         @_lineBVH = new BDS.BVH2(segments);
 
     setAssociatedData: (obj) ->
@@ -144,20 +146,23 @@ class BDS.Polyline
         return output
 
     # Returns a list of line segments for intersection tests.
-    _toLineSegments: (start_index) ->
-
-        if start_index == undefined
-            start_index = 0
+    _toLineSegments: () ->
 
         output = []
 
         len = @_points.length
-        for i in [0...len - 1]
-            output.push(new BDS.Line(i, i + 1, @_points))
+        for i in [0...len - 1] by 1
+            line = new BDS.Line(i, i + 1, @_points)
+            line.p1_index
+            line.p2_index
+            output.push(line)
 
         # Add the last point.
         if @_isClosed
-            output.push(new BDS.Line(len - 1, 0, @_points))
+            line = new BDS.Line(len - 1, 0, @_points)
+            line.p1_index
+            line.p2_index
+            output.push(line)
 
         return output
 
@@ -196,9 +201,13 @@ class BDS.Polyline
 
     detect_intersection_with_box: (box) ->
 
+        # We will want bounding boxes at this point.
+        if @_boundingbox == undefined
+            @generateBoundingBox()
+
         # No intersection if the bounding box doesn't intersect the input box.
         if not box.intersects_box(@_boundingbox)
-            return true
+            return false
 
         # Filled polyline and contains entire box.
         if @isFilled() and @containsPoint(box.min)
@@ -220,16 +229,11 @@ class BDS.Polyline
     detect_intersection_with_polyline: (polyline) ->
 
         # Convert both polylines to line segments.
-        index1 = 0
-        lines1 = @_toLineSegments(index1)
-        index2 = line1.length
-        lines2 = @_toLineSegments(index2)
+        lines1 = @_toLineSegments()
+        lines2 = polyline._toLineSegments()
 
         all_lines = lines1.concat(lines2)
 
         intersector = new BDS.Intersector()
 
-        #non_intersection_indices specify the beginings of ranges that won't be intersected with each other.
-        # They are used to make sure we don't detect internal intersections in self-intersecting polyline's
-        params = {lines: lines, non_intersection_indices: [index1, index2]}
-        return intersector.detect_intersection_line_segments(params)
+        return intersector.detect_intersection_line_segments_partitioned(all_lines)

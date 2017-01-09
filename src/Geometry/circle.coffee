@@ -8,11 +8,23 @@ Written by Bryce Summers on 1 - 6 - 2017.
 class BDS.Circle
 
     # BDS.Point, float
-    constructor: (@center, @radius, @filled) ->
+    constructor: (@_center, @_radius, @filled) ->
         if @filled == undefined
             @filled = false
 
+        ###
+        @_boundingbox, stored the bounding box.
+        ###
+
     isFilled: () -> @filled
+
+    setPosition: (x, y) ->
+        @_center.x = x
+        @_center.y = y
+
+    getPosition: () -> @_center.clone()
+
+    getRadius: () -> @_radius
 
     #detect_intersection_with_ray: (ray) ->
 
@@ -25,16 +37,16 @@ class BDS.Circle
         l = ray.getDirection()
         
         # BDS.Point.        
-        o_sub_c = o.sub(@center)
+        o_sub_c = o.sub(@_center)
 
         # floats.
         o_sub_c_sqr = o_sub_c.dot(o_sub_c)
 
         # If the circle is filled, then their is a collision immediatly if the ray originates within the circle.
-        return 0 if @filled and Math.sqrt(o_sub_c_sqr) < @radius
+        return 0 if @filled and Math.sqrt(o_sub_c_sqr) < @_radius
 
         loc = o_sub_c.dot(l);# Projection. l needs to be normalized.
-        det_sqr = loc*loc - o_sub_c_sqr + @radius*@radius
+        det_sqr = loc*loc - o_sub_c_sqr + @_radius*@_radius
 
         # No intersection.
         return null if (det_sqr < 0)
@@ -71,6 +83,26 @@ class BDS.Circle
     # BDS.Point
     containsPoint: (pt) ->
 
-        diff = pt.sub(@center)
+        diff = pt.sub(@_center)
         dist = diff.norm()
-        return dist < @radius
+        return dist < @_radius
+
+    generateBoundingBox: () ->
+
+        @_boundingbox = new BDS.Box()
+
+        min    = @_center.clone()
+        min.x -= @_radius
+        min.y -= @_radius
+
+        max    = @_center.clone()
+        max.x += @_radius
+        max.y += @_radius
+
+        @_boundingbox.expandByPoint(min)
+        @_boundingbox.expandByPoint(max)
+
+        return @_boundingbox
+
+    getBoundingBox: () ->
+        return @_boundingbox

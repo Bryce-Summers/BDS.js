@@ -9,6 +9,8 @@ class BDS.Testing
         @test_lines()
         @test_intersector()
 
+        @test_arrays()
+
         # FIXME: Test the rest!
         #@test_polyline()
 
@@ -290,6 +292,23 @@ class BDS.Testing
 
     test_halfedge: () ->
 
+
+    test_arrays: () ->
+        array = [0, 1, 2, 3, 4, 4, 4, 5]
+
+        comparator = (a, b) -> a <= b
+
+        # finding 0, 1, 2, and 3.
+        for i in [0..3]
+            @ASSERT(BDS.Arrays.binarySearch(array, i, comparator) == i)
+
+        @ASSERT(BDS.Arrays.binarySearch(array, 4, comparator) == 6)
+    
+        # Larger than array should return the last array element.
+        @ASSERT(BDS.Arrays.binarySearch(array, 89, comparator) == 7)
+
+        # Check lower than array should return -1
+        @ASSERT(BDS.Arrays.binarySearch(array, -89, comparator) == -1)
 
 new BDS.Testing()
 

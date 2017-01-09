@@ -15,16 +15,23 @@ BDS.Arrays.swap = (array, i1,i2) ->
 # comparator = (e1, e2) -> Returns true if e1 <= e2.
 BDS.Arrays.binarySearch = (array, elem_target, comparator) ->
 
-    # inclusive.
-    min = 0
+    min = 0 # The minnimum element that is guranteed to be <= than the target.
 
-    # exclusive.
-    max = array.length
+    max = array.length - 1 # the maximum element that could be <= the target.
 
-    mid = max/2
+    mid = Math.floor(max/2)
 
-    while min < max
+    while min <= max
 
         elem_current = array[mid]
 
-        #if 
+        # If current <= target, then we have a non strict lower bound.
+        if comparator(elem_current, elem_target)
+            min = mid + 1 # Force the min up.
+        # Otherwise we have a strict upper bound.
+        else      
+            max = mid - 1# Force the max down.
+
+        mid = Math.floor((min + max)/2)
+
+    return min - 1

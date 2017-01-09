@@ -7,7 +7,7 @@ Written by Bryce Summers on 1 - 5 - 2017
 class BDS.Box
 
     # BDS.Point, BDS.Point, bool
-    constructor : (@min, @max, @isClosed) ->
+    constructor : (@min, @max, @_isFilled) ->
 
         if not @min
             @min = new BDS.Point(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE)
@@ -16,11 +16,14 @@ class BDS.Box
             @max = new BDS.Point(Number.MIN_VALUE, Number.MIN_VALUE, Number.MIN_VALUE)
 
         # Whether the box contains its area or not.
-        if not @isClosed
-            @isClosed = true
+        if not @_isFilled
+            @_isFilled = true
 
     clone: () ->
         return new BDS.Box(@min.clone(), @max.clone())
+
+    isFilled: () ->
+        return @_isFilled
 
     expandByPoint: (p) ->
 
@@ -71,3 +74,21 @@ class BDS.Box
 
         # Intersection exists if the intersection has a positive area.
         return intersection.area() > 0
+
+    toPolyline: () ->
+
+        p0 = @min.clone()
+
+        p1 = @min.clone()
+        p1.x = @max.x
+
+        p2 = @max.clone()
+
+        p3 = @min.clone()
+        p3.y = @max.y
+
+        points = [p0, p1, p2, p3]
+
+        # Closed, potentially filled polyline, with the coordinates of this box.
+        polyline = new BDS.Polyline(true, points, @_isFilled)
+        return polyline

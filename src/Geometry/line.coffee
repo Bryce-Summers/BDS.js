@@ -17,7 +17,8 @@ class BDS.Line
         @p2_index = end_point_index
 
         # The canonical array of points.
-        @points = point_array;
+        # This may also be used externally for partitioning sets of lines for intersection detection.
+        @points = point_array
 
         @p1 = @points[@p1_index]
         @p2 = @points[@p2_index]

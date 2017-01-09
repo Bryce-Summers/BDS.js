@@ -16,7 +16,7 @@ class BDS.BVH2D
     # xy = {val: 'x' or 'y'}
     # FIXME: In hindsite, this xyz thing is silly, since we should just use the minnimizing axis.
     constructor: (polygons, xy) ->
-       
+
         if not xy
             xy = {val: 'x'}
 
@@ -31,8 +31,8 @@ class BDS.BVH2D
         # Base case, less than 4 polygons get put into a collection of leaf nodes.
         if polygons.length < 4
             @_leaf_node = true
+            @_leafs = []
             for i in [0...polygons.length]
-                @_leafs = []
                 @_leafs.push(polygons[i])
             return
 
@@ -164,7 +164,7 @@ class BDS.BVH2D
     _ensure_bounding_boxes: (polygon_list) ->
         
         for polygon in polygon_list
-            polygon.generateBoudingBox()
+            polygon.generateBoundingBox()
 
     # Computes the axis aligned bounding box minnimally bounding the given
     # list of meshes.
@@ -207,12 +207,12 @@ class BDS.BVH2D
         if @_leaf_node
             for polygon in @_leafs
                 if polygon.isClosed() and polygon.containsPoint(pt)
-                    return line
+                    return polygon
             return null
 
         # Check children.
         if @_AABB.containsPoint(pt)
-            result = @_left.query_point(pt, output_list)
+            result = @_left.query_point(pt)
             return result if result != null
 
             result = @_right.query_point(pt)
@@ -254,11 +254,12 @@ class BDS.BVH2D
 
         if @_leaf_node
             for polygon in @_leafs
-                AABB = polygon.getBoundingBox()
 
-                # Now output the polygon if it intersects with the box.
+                # Output the polygon if it intersects the given box.
                 if polygon.detect_intersection_with_box(query_box)
-                    output_list.push(query_box)
+                    output_list.push(polygon)
+                continue
+            return output_list # Base Case.
 
         # Check children.
         if @_AABB.intersects_box(query_box)

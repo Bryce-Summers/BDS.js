@@ -56,14 +56,14 @@ class BDS.Intersector
     ###
     Returns true iff there is at least one valid intersection detected in the input set of polylines.
     Does not treat lines that intersect at common points as intersecting.
-    params = {lines: lines, non_intersection_indices: [i1, i2, ...]}
+    
     non_intersection_indices demarcate ranges of indices that should not be intersected against each other.
     Assumes that the indices are in rted order.
     ###
-    detect_intersection_line_segments: (params) ->
+    detect_intersection_line_segments_partitioned: (lines, partition_indices) ->
 
         # Stores all of the line enter and exit events.
-        event_queue = new BDS.Intersector.EventPQ(params.lines)
+        event_queue = new BDS.Intersector.EventPQ(lines)
 
         # Stores all of the lines currently spanning the sweep line.
         # We can use a heap for intersection tests across all of the lines and easy deletion of the exiting events.
@@ -84,10 +84,9 @@ class BDS.Intersector
             
                 when BDS.Intersector.Event.ENTER
                     tuple = event.tuple2
-                    tuple.id = i # Set ID.
 
                     # Return true as there is a valid intersection that is detected.
-                    if tupleSet.detect_intersection_with_line(tuple.line, params)
+                    if tupleSet.detect_intersection_with_line_partitioned(tuple.line, partition_indices)
                         return true
 
                     tupleSet.addTuple(tuple)
@@ -97,7 +96,7 @@ class BDS.Intersector
                     tupleSet.removeTuple(event.tuple2)
                     continue
 
-        return
+        return false
 
     ###
     Slower, but more robust version of intersect.
@@ -162,16 +161,18 @@ class BDS.Intersector.EventPQ
         enter.type = BDS.Intersector.Event.ENTER
         exit.type  = BDS.Intersector.Event.EXIT
 
+        # Enter events get the entrance location.
         enter.x = p1.x
         enter.y = p1.y
 
+        # Exit events get the exit location.
         exit.x = p2.x
         exit.y = p2.y
 
         line_tuple = new BDS.Intersector.LineTuple()
-        line_tuple.x = p1.x;
-        line_tuple.y = p1.y;
-        line_tuple.line = line;
+        line_tuple.x = p1.x
+        line_tuple.y = p1.y
+        line_tuple.line = line
         line_tuple.id = id
 
         line_tuple2 = new BDS.Intersector.LineTuple()
@@ -215,9 +216,11 @@ BDS.Intersector.Event_Comparator = (e1, e2) ->
 
     # Differentiate by x location, then y location.
     return true  if e1.x < e2.x
-    return false if e2.x < e1.x
+    return false if e1.x > e2.x
     return true  if e1.y < e2.y
-    return false if e2.y > e1.y
+    return false if e1.y > e2.y
+
+    # Events occur at the same location.
 
     # Exit events before entrance events at identical locations.
     if (e1.type == BDS.Intersector.Event.EXIT) and (e2.type == BDS.Intersector.Event.ENTER)
@@ -229,7 +232,7 @@ BDS.Intersector.Event_Comparator = (e1, e2) ->
         return false
 
     # If we have to enter or exit events at the same location, then we differentiate by arbitrary id.
-    if (e1.tuple1.id) <= (e2.tuple1.id)
+    if (e1.tuple2.id) <= (e2.tuple2.id)
 
         return true
 
@@ -291,6 +294,9 @@ class BDS.Intersector.LineTupleSet
         tuple = @heap.dequeue()
 
         if tuple != line_tuple
+            err = new Error();
+            console.log(err.stack);
+            debugger;
             throw new Error("ERROR: line_tuple exit ordering is messed up!")
 
         return tuple
@@ -304,12 +310,36 @@ class BDS.Intersector.LineTupleSet
             line_crossing_sweep = tuple.line
             input_line.intersect(line_crossing_sweep)
 
-    # params = {lines: all_lines, non_intersection_indices: [i1, i2, ...]}
-    # ASSUMES non_intersection_indices are sorted.
-    detect_intersection_with_line: (input_line, params) ->
+    # Returns truee if their is an intersection between two lines from seperate point lists.
+    # Partition is done based on pointer equality for the point's lists.
+    detect_intersection_with_line_partitioned: (input_line) ->
 
-
+        len = @heap.size()
+        for i in [0...len]
+            tuple = @heap.getElem(i)
+            line_crossing_sweep = tuple.line
             
+            # Same Partition, ignore this pair.
+            if line_crossing_sweep.points == input_line.points
+                continue
+
+            # Return detected intersections from lines in seperate partitions.
+            if input_line.detect_intersection(line_crossing_sweep)
+                return true
+
+        return false
+
+    detect_intersection_with_line: (input_line) ->
+
+        len = @heap.size()
+        for i in [0...len]
+            tuple = @heap.getElem(i)
+            line_crossing_sweep = tuple.line
+
+            if input_line.detect_intersection(line_crossing_sweep)
+                return true
+
+        return false
 
 # These objects represent events along the sweep line.
 class BDS.Intersector.Event
