@@ -99,10 +99,12 @@ class BDS.Intersector
     intersect_brute_force: (lines) ->
         numLines = lines.length
 
-        for a in [0 ...numLines]#(int a = 0; a < numLines; a++)
-            for b in [a + 1 ...numLines]#(int b = a + 1; b < numLines; b++)
+        for a in [0 ...numLines] by 1#(int a = 0; a < numLines; a++)
+            for b in [a + 1 ...numLines] by 1#(int b = a + 1; b < numLines; b++)
 
                 lines[a].intersect(lines[b])
+
+        return
 
 
 ###
@@ -244,7 +246,7 @@ class BDS.Intersector.LineSweepSet
             err = new Error("ERROR: line_tuple exit ordering is messed up!")
             console.log(err.stack)
             debugger
-            throw new err
+            throw err
 
         return my_event
 

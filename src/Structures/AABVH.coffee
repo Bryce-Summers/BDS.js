@@ -11,6 +11,8 @@
 
 class BDS.BVH2D
 
+    @MAX_OBJECTS_PER_LEAF = 4
+
     # Contructed from the tree rooted at the given THREE.Object3D node.
     # polygons is a BDS.Polyline()
     # xy = {val: 'x' or 'y'}
@@ -21,15 +23,16 @@ class BDS.BVH2D
             xy = {val: 'x'}
 
         # Array of THREE.mesh objects.
-        #@_leafs = []
+        @_leafs = []
         @_leaf_node = false
+        @_size = polygons.length
 
         # Ensure that all of these polygons have bounding boxes.
         @_ensure_bounding_boxes(polygons)
         @_AABB = @_compute_AABB(polygons)
 
         # Base case, less than 4 polygons get put into a collection of leaf nodes.
-        if polygons.length < 4
+        if polygons.length < BDS.BVH2D.MAX_OBJECTS_PER_LEAF
             @_leaf_node = true
             @_leafs = []
             for i in [0...polygons.length]
@@ -46,6 +49,16 @@ class BDS.BVH2D
         xy.val = @_nextXY(xy)
         @_left  = new BDS.BVH2D(left_partition,  xy)
         @_right = new BDS.BVH2D(right_partition, xy)
+
+    # Used in things like tree compression and rebalancing.
+    # BDS.BVH2D -> copies all fields into this node.
+    _copy_from: (bvh) ->
+        @_leaf_node = bvh._leaf_node
+        @_size      = bvh._size
+        @_AABB      = bvh._AABB
+        @_leafs     = bvh._leafs
+        @_left      = bvh._left
+        @_right     = bvh._right
 
     ###
      - Private Construction Methods. -----------------------
@@ -309,3 +322,126 @@ class BDS.BVH2D
             @_right._toPolylines(output)
 
         return
+
+
+    # BVH dynamic editing functions.
+    # Optimizes the bvh by rebalancing the tree.
+    optimize: () ->
+
+    # Adds the given polyline to the bvh.
+    add: (polyline) ->
+
+        polyline.ensureBoundingBox()
+
+        # BASE CASE:
+        # Add the polyline to a leaf node.
+        if @_leaf_node
+            @_leafs.push(polyline)
+            @_AABB = @_AABB.union(polyline.getBoundingBox())
+            @_size++
+            return
+        
+        # Compute the potential bounding boxes that this polyline will create.
+        potential_bb_left  = @_left._AABB.union(polyline.getBoundingBox())
+        potential_bb_right = @_right._AABB.union(polyline.getBoundingBox())
+
+        # Determine which side the polyline may enter that will create the smallest disturbance.
+        sa_diff_left  = @_compute_SA(potential_bb_left)  - @_compute_SA(@_left._AABB)
+        sa_diff_right = @_compute_SA(potential_bb_right) - @_compute_SA(@_right._AABB)
+
+        # Recursion.
+        if sa_diff_left < sa_diff_right
+            @_left.add(polyline)
+            @_AABB = potential_bb_left  # Update this node's bounding box.
+        else
+            @_right.add(polyline)
+            @_AABB = potential_bb_right # Update this node's bounding box.
+
+        # Update the size variable.
+        @_size++
+
+        return
+
+    # Removes the given polyline from the bvh.
+    # BDS.Polyline -> bool
+    # Return indicates whether the polyline has been successfully removed.
+    remove: (polyline) ->
+
+        polyline.ensureBoundingBox()
+        polyline_bb = polyline.getBoundingBox()
+
+        # Skip this branch, because the polyline is not in its bounding box.
+        if not polyline_bb.intersects_box(@_AABB)
+            return false
+
+        # BASE CASE:
+        # Add the polyline to a leaf node.
+        if @_leaf_node
+
+            # Rebuild this leaf node, shirinking it to not include the removed polyline.
+            @_AABB = new BDS.Box()
+
+            old_lines = @_leafs
+            @_leafs = []
+
+            removed = false
+
+            for old_line in old_lines
+
+                # Don't add the polyline to be removed.
+                if polyline == old_line
+                    removed = true
+                    @_size-- # Decrease this node's size.
+                    continue
+
+                @_AABB = @_AABB.union(old_line.getBoundingBox())
+                @_leafs.push(old_line)
+
+            return removed
+
+        # Try left.
+        removed = @_left.remove(polyline)
+
+        # Try right, if necessary.
+        removed = @_right.remove(polyline) if not removed
+
+        # No change.
+        if not removed
+            return false
+
+
+        # From here on out, we assume that a polyline has been removed.
+
+
+        # Reduce this node's size.
+        @_size--
+
+        # Both left and right are depleted.
+        # This could happen if this is the root of the tree and the very last object has been removed.
+        if @_size == 0
+            @_leaf_node = true
+            @_leafs = []
+            @_left  = undefined
+            @_right = undefined
+            return removed
+            
+        # Left node is depleted, compress the right branch onto this node.
+        if @_left._size == 0
+            # Compress the right branch onto this node.
+            @_copy_from(@_right)
+
+            # Note: after this point this could now be a leaf node.
+            return true
+
+        # right node is depleted, compress the left branch onto this node.
+        if @_right._size == 0
+            
+            @_copy_from(@_left)
+
+            # Note: after this point this could now be a leaf node.
+            return true
+
+        # If neither branch is depleted, then we update this parent node's bounding box.
+        @_AABB = @_left._AABB.union(@_right._AABB)
+
+        return true

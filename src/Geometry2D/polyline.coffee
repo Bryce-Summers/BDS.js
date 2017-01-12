@@ -46,6 +46,10 @@ class BDS.Polyline
         return
 
     addPoint: (p) ->
+
+        if isNaN(p.x) or isNaN(p.y) or isNaN(p.z)
+            debugger
+
         @_points.push(p)
 
         # Expand the bounding box if it is defined.
@@ -100,11 +104,19 @@ class BDS.Polyline
         
         return @computeArea() > 0
 
+    ensureBoundingBox: () ->
+        if @_boundingbox == undefined
+            @generateBoundingBox()
+
+        return @_boundingbox
+
     generateBoundingBox: (polygon) ->
         @_boundingbox = new BDS.Box()
 
         for pt in @_points
             @_boundingbox.expandByPoint(pt)
+            if isNaN(@_boundingbox.min.x)
+                debugger
 
         return @_boundingbox
 

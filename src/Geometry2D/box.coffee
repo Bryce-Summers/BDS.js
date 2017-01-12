@@ -73,7 +73,8 @@ class BDS.Box
         intersection = @intersect(box)
 
         # Intersection exists if the intersection has a positive area.
-        return intersection.area() > 0
+        # Or if we are intersecting a box that acts as an axis aligned line, which would have 0 area.
+        return intersection.area() >= 0
 
     toPolyline: () ->
 

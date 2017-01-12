@@ -173,7 +173,8 @@ class BDS.Line
         a_opposites = a1*a2 <= 0
         b_opposites = b1*b2 <= 0
 
-        return true if (a_opposites and b_opposites) #or
+        return true if (a_opposites and b_opposites) and (a1 != 0 or a2 != 0) # Avoid collinear intersections.
+        #or
         ###
                        (a_opposites and b_on) or
                        (a_on and b_opposites)
@@ -211,6 +212,9 @@ class BDS.Line
         u = (dy * bd.x - dx * bd.y) / det
         v = (dy * ad.x - dx * ad.y) / det
 
+        #if det == 0, then the two lines are collinear.
+
+
         # The intersection is at time coordinates u and v.
         # Note: Time is relative to the offsets, so p1 = time 0 and p2 is time 1.
 
@@ -221,6 +225,9 @@ class BDS.Line
         other.split_points_per.push(v)
 
         intersection_point = as.add(ad.multScalar(u))
+
+        if isNaN(intersection_point.x)
+            debugger
 
         # Get the next index that will be used to store the newly created point.
         index = @points.length
