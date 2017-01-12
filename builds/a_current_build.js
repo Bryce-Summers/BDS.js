@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 10-01-2017
+ *  Single File concatenated by Grunt Concatenate on 12-01-2017
  */
 /*
  * Defines namespaces.
@@ -1140,7 +1140,7 @@ FIXME: Return proper point in polyline tests for complemented filled polylines.
     };
 
     Polyline.prototype.isComplemented = function() {
-      return this.computeArea() > 0;
+      return this.computeArea() >= -0.0000001;
     };
 
     Polyline.prototype.ensureBoundingBox = function() {

@@ -102,7 +102,7 @@ class BDS.Polyline
     # -> bool
     isComplemented: () -> 
         
-        return @computeArea() > 0
+        return @computeArea() >= -0.0000001
 
     ensureBoundingBox: () ->
         if @_boundingbox == undefined
