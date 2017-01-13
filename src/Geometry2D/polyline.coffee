@@ -97,12 +97,12 @@ class BDS.Polyline
             area += (p2.x + p1.x)*(p2.y - p1.y)
             p1 = p2 #/ Shift p2 to p1.
 
-        return area / 2.0
+        return -area / 2.0
 
     # -> bool
     isComplemented: () -> 
         
-        return @computeArea() >= -0.0000001
+        return @computeArea() <= 0.0000001
 
     ensureBoundingBox: () ->
         if @_boundingbox == undefined
