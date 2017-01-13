@@ -13,6 +13,7 @@ class BDS.Testing
 
         # FIXME: Test the rest!
         #@test_polyline()
+        #text_bvh
 
         console.log("All tests have passed!")
         document.getElementById("text").innerHTML = "All Tests Have Passed!";

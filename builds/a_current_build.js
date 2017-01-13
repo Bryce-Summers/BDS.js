@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 12-01-2017
+ *  Single File concatenated by Grunt Concatenate on 13-01-2017
  */
 /*
  * Defines namespaces.
@@ -1641,11 +1641,10 @@ Purpose:
       sa_diff_right = this._compute_SA(potential_bb_right) - this._compute_SA(this._right._AABB);
       if (sa_diff_left < sa_diff_right) {
         this._left.add(polyline);
-        this._AABB = potential_bb_left;
       } else {
         this._right.add(polyline);
-        this._AABB = potential_bb_right;
       }
+      this._AABB = this._left._AABB.union(this._right._AABB);
       this._size++;
     };
 

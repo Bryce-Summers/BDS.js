@@ -352,10 +352,11 @@ class BDS.BVH2D
         # Recursion.
         if sa_diff_left < sa_diff_right
             @_left.add(polyline)
-            @_AABB = potential_bb_left  # Update this node's bounding box.
         else
             @_right.add(polyline)
-            @_AABB = potential_bb_right # Update this node's bounding box.
+
+        # Update the bounding box for this node.
+        @_AABB = @_left._AABB.union(@_right._AABB)
 
         # Update the size variable.
         @_size++
