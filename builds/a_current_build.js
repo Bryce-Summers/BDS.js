@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 13-01-2017
+ *  Single File concatenated by Grunt Concatenate on 27-01-2017
  */
 /*
  * Defines namespaces.
@@ -95,7 +95,7 @@ features: Efficient Line Segment Intersection.
     Assumes that the indices are in rted order.
      */
 
-    Intersector.prototype.detect_intersection_line_segments_partitioned = function(lines, partition_indices) {
+    Intersector.prototype.detect_intersection_line_segments_partitioned = function(lines) {
       var event, event_queue, i, j, len, line, ref, sweepSet;
       event_queue = new BDS.Intersector.EventPQ(lines);
       sweepSet = new BDS.Intersector.LineSweepSet();
@@ -105,7 +105,7 @@ features: Efficient Line Segment Intersection.
         switch (event.type) {
           case BDS.Intersector.Event.ENTER:
             line = event.line;
-            if (sweepSet.detect_intersection_with_line_partitioned(line, partition_indices)) {
+            if (sweepSet.detect_intersection_with_line_partitioned(line)) {
               return true;
             }
             sweepSet.add(event.twin);
@@ -118,6 +118,26 @@ features: Efficient Line Segment Intersection.
       return false;
     };
 
+    Intersector.prototype.intersect_line_segments_partitioned = function(lines) {
+      var event, event_queue, i, j, len, line, ref, sweepSet;
+      event_queue = new BDS.Intersector.EventPQ(lines);
+      sweepSet = new BDS.Intersector.LineSweepSet();
+      len = event_queue.size();
+      for (i = j = 0, ref = len; j < ref; i = j += 1) {
+        event = event_queue.delMin();
+        switch (event.type) {
+          case BDS.Intersector.Event.ENTER:
+            line = event.line;
+            sweepSet.intersect_with_line_partitioned(line);
+            sweepSet.add(event.twin);
+            continue;
+          case BDS.Intersector.Event.EXIT:
+            sweepSet.remove(event);
+            continue;
+        }
+      }
+    };
+
 
     /*
     Slower, but more robust version of intersect.
@@ -125,6 +145,20 @@ features: Efficient Line Segment Intersection.
      */
 
     Intersector.prototype.intersect_brute_force = function(lines) {
+      var a, b, j, k, line1, line2, numLines, ref, ref1, ref2;
+      numLines = lines.length;
+      for (a = j = 0, ref = numLines; j < ref; a = j += 1) {
+        for (b = k = ref1 = a + 1, ref2 = numLines; k < ref2; b = k += 1) {
+          line1 = lines[a];
+          line2 = lines[b];
+          if (line1.points !== line2.points) {
+            line1.intersect(line2);
+          }
+        }
+      }
+    };
+
+    Intersector.prototype.intersect_brute_force_partitioned = function(lines) {
       var a, b, j, k, numLines, ref, ref1, ref2;
       numLines = lines.length;
       for (a = j = 0, ref = numLines; j < ref; a = j += 1) {
@@ -260,6 +294,21 @@ features: Efficient Line Segment Intersection.
       return results;
     };
 
+    LineSweepSet.prototype.intersect_with_line_partitioned = function(input_line) {
+      var event, i, j, len, line_crossing_sweep, ref, results;
+      len = this.heap.size();
+      results = [];
+      for (i = j = 0, ref = len; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
+        event = this.heap.getElem(i);
+        line_crossing_sweep = event.line;
+        if (line_crossing_sweep.points === input_line.points) {
+          continue;
+        }
+        results.push(input_line.intersect(line_crossing_sweep));
+      }
+      return results;
+    };
+
     LineSweepSet.prototype.detect_intersection_with_line_partitioned = function(input_line) {
       var event, i, j, len, line_crossing_sweep, ref;
       len = this.heap.size();
@@ -334,6 +383,7 @@ Please use Polylines for the geometric representation and drawing of lines.
       this.offset = this.p2.sub(this.p1);
       this.split_points_per = [];
       this.split_points_indices = [];
+      this.split_points = [];
     }
 
 
@@ -345,7 +395,7 @@ Please use Polylines for the geometric representation and drawing of lines.
      */
 
     Line.prototype.intersect = function(other) {
-      if (this.p1_index === other.p1_index || this.p1_index === other.p2_index || this.p2_index === other.p1_index || this.p2_index === other.p2_index) {
+      if (this.points === other.points && (this.p1_index === other.p1_index || this.p1_index === other.p2_index || this.p2_index === other.p1_index || this.p2_index === other.p2_index)) {
         return false;
       }
       if (!this.detect_intersection(other)) {
@@ -390,6 +440,18 @@ Please use Polylines for the geometric representation and drawing of lines.
         last_indice = next_indice;
       }
       lines_out.push(new BDS.Line(last_indice, this.p2_index, this.points));
+    };
+
+    Line.prototype.getSplitPoints = function() {
+      var j, len1, out, pi, pt, ref;
+      out = [];
+      ref = this.split_points_indices;
+      for (j = 0, len1 = ref.length; j < len1; j++) {
+        pi = ref[j];
+        pt = this.points[pi];
+        out.push(pt);
+      }
+      return out;
     };
 
 
@@ -463,6 +525,7 @@ Please use Polylines for the geometric representation and drawing of lines.
                      (a_opposites and b_on) or
                      (a_on and b_opposites)
        */
+      return false;
     };
 
 
@@ -502,6 +565,10 @@ Please use Polylines for the geometric representation and drawing of lines.
       index = this.points.length;
       this.points.push(intersection_point);
       this.split_points_indices.push(index);
+      if (other.points !== this.points) {
+        index = other.points.length;
+        other.points.push(intersection_point);
+      }
       return other.split_points_indices.push(index);
     };
 
@@ -1202,22 +1269,34 @@ FIXME: Return proper point in polyline tests for complemented filled polylines.
     };
 
     Polyline.prototype._toLineSegments = function() {
-      var i, j, len, line, output, ref;
+      var i, j, len, line, output, points, ref;
       output = [];
+      points = this.toPoints();
       len = this._points.length;
       for (i = j = 0, ref = len - 1; j < ref; i = j += 1) {
-        line = new BDS.Line(i, i + 1, this._points);
+        line = new BDS.Line(i, i + 1, points);
         line.p1_index;
         line.p2_index;
         output.push(line);
       }
       if (this._isClosed) {
-        line = new BDS.Line(len - 1, 0, this._points);
+        line = new BDS.Line(len - 1, 0, points);
         line.p1_index;
         line.p2_index;
         output.push(line);
       }
       return output;
+    };
+
+    Polyline.prototype.toPoints = function() {
+      var j, len1, out, pt, ref;
+      out = [];
+      ref = this._points;
+      for (j = 0, len1 = ref.length; j < len1; j++) {
+        pt = ref[j];
+        out.push(pt);
+      }
+      return out;
     };
 
     Polyline.prototype.toRays = function(output) {
@@ -1288,6 +1367,25 @@ FIXME: Return proper point in polyline tests for complemented filled polylines.
       all_lines = lines1.concat(lines2);
       intersector = new BDS.Intersector();
       return intersector.detect_intersection_line_segments_partitioned(all_lines);
+    };
+
+    Polyline.prototype.report_intersections_with_polyline = function(polyline) {
+      var all_lines, i, intersector, j, length, lines1, lines2, out, points, ref, ref1;
+      lines1 = this._toLineSegments();
+      lines2 = polyline._toLineSegments();
+      all_lines = lines1.concat(lines2);
+      intersector = new BDS.Intersector();
+      if (lines1.length === 0) {
+        return [];
+      }
+      points = lines1[0].points;
+      length = points.length;
+      intersector.intersect_line_segments_partitioned(all_lines);
+      out = [];
+      for (i = j = ref = length, ref1 = points.length; j < ref1; i = j += 1) {
+        out.push(points[i]);
+      }
+      return out;
     };
 
     return Polyline;
@@ -1697,6 +1795,366 @@ Purpose:
       }
       this._AABB = this._left._AABB.union(this._right._AABB);
       return true;
+    };
+
+    return BVH2D;
+
+  })();
+
+}).call(this);
+
+// Generated by CoffeeScript 1.11.1
+(function() {
+  BDS.BVH2D = (function() {
+    BVH2D.MAX_OBJECTS_PER_LEAF = 4;
+
+    function BVH2D(polygons, xy) {
+      var i, j, left_partition, ref, ref1, right_partition;
+      if (polygons === void 0) {
+        polygons = [];
+      }
+      if (!xy) {
+        xy = {
+          val: 'x'
+        };
+      }
+      this._leafs = [];
+      this._leaf_node = false;
+      this._size = polygons.length;
+      this._ensure_bounding_boxes(polygons);
+      this._AABB = this._compute_AABB(polygons);
+      if (polygons.length < BDS.BVH2D.MAX_OBJECTS_PER_LEAF) {
+        this._leaf_node = true;
+        this._leafs = [];
+        for (i = j = 0, ref = polygons.length; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
+          this._leafs.push(polygons[i]);
+        }
+        return;
+      }
+      if (xy.dim === 2) {
+        this._AABB.min.z = -1;
+        this._AABB.max.z = +1;
+      }
+      polygons = this._sort_polygon_list(polygons, xy);
+      ref1 = this._partition_by_SA(polygons), left_partition = ref1[0], right_partition = ref1[1];
+      xy.val = this._nextXY(xy);
+      this._left = new BDS.BVH2D(left_partition, xy);
+      this._right = new BDS.BVH2D(right_partition, xy);
+    }
+
+    BVH2D.prototype._copy_from = function(bvh) {
+      this._leaf_node = bvh._leaf_node;
+      this._size = bvh._size;
+      this._AABB = bvh._AABB;
+      this._leafs = bvh._leafs;
+      this._left = bvh._left;
+      return this._right = bvh._right;
+    };
+
+
+    /*
+     - Private Construction Methods. -----------------------
+     */
+
+    BVH2D.prototype._sort_polygon_list = function(polygon_list, xy) {
+      var centroid_index_list, i, j, len, output, polygon_index, ref, sort_function;
+      centroid_index_list = this._centroid_index_list(polygon_list);
+      sort_function = function(a, b) {
+        switch (xy.val) {
+          case 'x':
+            return a.centroid.x - b.centroid.x;
+          case 'y':
+            return a.centroid.y - b.centroid.y;
+        }
+        debugger;
+        return console.log("xy is malformed.");
+      };
+      centroid_index_list.sort(sort_function);
+      output = [];
+      len = polygon_list.length;
+      for (i = j = 0, ref = len; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
+        polygon_index = centroid_index_list[i].index;
+        output.push(polygon_list[polygon_index]);
+      }
+      return output;
+    };
+
+    BVH2D.prototype._nextXY = function(xy) {
+      switch (xy.val) {
+        case 'x':
+          return 'y';
+        case 'y':
+          return 'x';
+      }
+      debugger;
+      console.log("xy is malformed.");
+      debugger;
+      return console.log("Case not handled.");
+    };
+
+    BVH2D.prototype._centroid_index_list = function(polygon_list) {
+      var centroid_index_node, i, j, len, output, ref;
+      output = [];
+      len = polygon_list.length;
+      for (i = j = 0, ref = len; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
+        centroid_index_node = {};
+        centroid_index_node.index = i;
+        centroid_index_node.centroid = this._computeCentroid(polygon_list[i]);
+        output.push(centroid_index_node);
+      }
+      return output;
+    };
+
+    BVH2D.prototype._computeCentroid = function(polygon) {
+      var centroid, i, j, len, point, ref;
+      centroid = new BDS.Point(0, 0);
+      len = polygon.size();
+      for (i = j = 0, ref = len; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
+        point = polygon.getPoint(i);
+        centroid = centroid.add(point);
+      }
+      return centroid.divScalar(len);
+    };
+
+    BVH2D.prototype._partition_by_SA = function(polygon_list) {
+      var i, i0, j, k, l, left, left_AABB, m, min_index, min_sah, ref, ref1, ref2, ref3, ref4, right, right_AABB, sah, sah_left, sah_right;
+      min_sah = Number.MAX_VALUE;
+      min_index = -1;
+      left = [polygon_list[0]];
+      right = [];
+      i0 = polygon_list.length - 1;
+      for (i = j = ref = i0; ref <= 1 ? j <= 1 : j >= 1; i = ref <= 1 ? ++j : --j) {
+        right.push(polygon_list[i]);
+      }
+      for (i = k = 1, ref1 = i0; 1 <= ref1 ? k <= ref1 : k >= ref1; i = 1 <= ref1 ? ++k : --k) {
+        left_AABB = this._compute_AABB(left);
+        sah_left = this._compute_SA(left_AABB);
+        right_AABB = this._compute_AABB(right);
+        sah_right = this._compute_SA(right_AABB);
+        sah = Math.max(sah_left, sah_right);
+        if (sah < min_sah) {
+          min_sah = sah;
+          min_index = i;
+        }
+        left.push(right.pop());
+      }
+      left = [];
+      right = [];
+      for (i = l = 0, ref2 = min_index; 0 <= ref2 ? l < ref2 : l > ref2; i = 0 <= ref2 ? ++l : --l) {
+        left.push(polygon_list[i]);
+      }
+      for (i = m = ref3 = min_index, ref4 = i0; ref3 <= ref4 ? m <= ref4 : m >= ref4; i = ref3 <= ref4 ? ++m : --m) {
+        right.push(polygon_list[i]);
+      }
+      return [left, right];
+    };
+
+    BVH2D.prototype._ensure_bounding_boxes = function(polygon_list) {
+      var j, len1, polygon, results;
+      results = [];
+      for (j = 0, len1 = polygon_list.length; j < len1; j++) {
+        polygon = polygon_list[j];
+        results.push(polygon.generateBoundingBox());
+      }
+      return results;
+    };
+
+    BVH2D.prototype._compute_AABB = function(polygon_list) {
+      var AABB, i, j, output, polygon, ref;
+      output = new BDS.Box();
+      for (i = j = 0, ref = polygon_list.length; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
+        polygon = polygon_list[i];
+        AABB = polygon.getBoundingBox();
+        output = output.union(AABB);
+      }
+      return output;
+    };
+
+    BVH2D.prototype._compute_SA = function(AABB) {
+      var dx, dy, dz, max, min, sxy, sxz, syz;
+      min = AABB.min;
+      max = AABB.max;
+      dx = max.x - min.x;
+      dy = max.y - min.y;
+      dz = max.z - min.z;
+      sxy = dx * dy;
+      sxz = dx * dz;
+      syz = dy * dz;
+      return sxy + sxz + syz;
+    };
+
+    BVH2D.prototype.query_point = function(pt) {
+      var j, len1, polygon, ref, result;
+      if (this._leaf_node) {
+        ref = this._leafs;
+        for (j = 0, len1 = ref.length; j < len1; j++) {
+          polygon = ref[j];
+          if (polygon.isClosed() && polygon.containsPoint(pt)) {
+            return polygon;
+          }
+        }
+        return null;
+      }
+      if (this._AABB.containsPoint(pt)) {
+        result = this._left.query_point(pt);
+        if (result !== null) {
+          return result;
+        }
+        result = this._right.query_point(pt);
+        return result;
+      }
+      return null;
+    };
+
+    BVH2D.prototype.query_point_all = function(pt, output_list) {
+      var j, len1, polygon, ref;
+      if (output_list === void 0) {
+        output_list = [];
+      }
+      if (this._leaf_node) {
+        ref = this._leafs;
+        for (j = 0, len1 = ref.length; j < len1; j++) {
+          polygon = ref[j];
+          if (polygon.isClosed() && polygon.containsPoint(pt)) {
+            output_list.push(polygon);
+          }
+        }
+        return output_list;
+      }
+      if (this._AABB.containsPoint(pt)) {
+        this._left.query_point_all(pt, output_list);
+        this._right.query_point_all(pt, output_list);
+      }
+      return output_list;
+    };
+
+    BVH2D.prototype.query_box_all = function(query_box, output_list) {
+      var j, len1, polygon, ref;
+      if (output_list === void 0) {
+        output_list = [];
+      }
+      if (this._leaf_node) {
+        ref = this._leafs;
+        for (j = 0, len1 = ref.length; j < len1; j++) {
+          polygon = ref[j];
+          if (polygon.detect_intersection_with_box(query_box)) {
+            output_list.push(polygon);
+          }
+          continue;
+        }
+        return output_list;
+      }
+      if (this._AABB.intersects_box(query_box)) {
+        this._left.query_box_all(query_box, output_list);
+        this._right.query_box_all(query_box, output_list);
+      }
+      return output_list;
+    };
+
+    BVH2D.prototype.toPolylines = function() {
+      var polylines;
+      polylines = [];
+      this._toPolylines(polylines);
+      return polylines;
+    };
+
+    BVH2D.prototype._toPolylines = function(output) {
+      var max, max_x, max_y, min, min_x, min_y, p0, p1, p2, p3, polyline;
+      min = this._AABB.min;
+      max = this._AABB.max;
+      min_x = min.x;
+      min_y = min.y;
+      max_x = max.x;
+      max_y = max.y;
+      p0 = new BDS.Point(min_x, min_y, 0);
+      p1 = new BDS.Point(max_x, min_y, 0);
+      p2 = new BDS.Point(max_x, max_y, 0);
+      p3 = new BDS.Point(min_x, max_y, 0);
+      polyline = new BDS.Polyline(true, [p0, p1, p2, p3]);
+      output.push(polyline);
+      if (!this._leaf_node) {
+        this._left._toPolylines(output);
+        this._right._toPolylines(output);
+      }
+    };
+
+    BVH2D.prototype.optimize = function() {};
+
+    BVH2D.prototype.add = function(polyline) {
+      var potential_bb_left, potential_bb_right, sa_diff_left, sa_diff_right;
+      polyline.ensureBoundingBox();
+      if (this._leaf_node) {
+        this._leafs.push(polyline);
+        this._AABB = this._AABB.union(polyline.getBoundingBox());
+        this._size++;
+        return;
+      }
+      potential_bb_left = this._left._AABB.union(polyline.getBoundingBox());
+      potential_bb_right = this._right._AABB.union(polyline.getBoundingBox());
+      sa_diff_left = this._compute_SA(potential_bb_left) - this._compute_SA(this._left._AABB);
+      sa_diff_right = this._compute_SA(potential_bb_right) - this._compute_SA(this._right._AABB);
+      if (sa_diff_left < sa_diff_right) {
+        this._left.add(polyline);
+      } else {
+        this._right.add(polyline);
+      }
+      this._AABB = this._left._AABB.union(this._right._AABB);
+      this._size++;
+    };
+
+    BVH2D.prototype.remove = function(polyline) {
+      var j, len1, old_line, old_lines, polyline_bb, removed;
+      polyline.ensureBoundingBox();
+      polyline_bb = polyline.getBoundingBox();
+      if (!polyline_bb.intersects_box(this._AABB)) {
+        return false;
+      }
+      if (this._leaf_node) {
+        this._AABB = new BDS.Box();
+        old_lines = this._leafs;
+        this._leafs = [];
+        removed = false;
+        for (j = 0, len1 = old_lines.length; j < len1; j++) {
+          old_line = old_lines[j];
+          if (polyline === old_line) {
+            removed = true;
+            this._size--;
+            continue;
+          }
+          this._AABB = this._AABB.union(old_line.getBoundingBox());
+          this._leafs.push(old_line);
+        }
+        return removed;
+      }
+      removed = this._left.remove(polyline);
+      if (!removed) {
+        removed = this._right.remove(polyline);
+      }
+      if (!removed) {
+        return false;
+      }
+      this._size--;
+      if (this._size === 0) {
+        this._leaf_node = true;
+        this._leafs = [];
+        this._left = void 0;
+        this._right = void 0;
+        return removed;
+      }
+      if (this._left._size === 0) {
+        this._copy_from(this._right);
+        return true;
+      }
+      if (this._right._size === 0) {
+        this._copy_from(this._left);
+        return true;
+      }
+      this._AABB = this._left._AABB.union(this._right._AABB);
+      return true;
+    };
+
+    BVH2D.prototype.toBoundingBox = function() {
+      return this._AABB.clone();
     };
 
     return BVH2D;

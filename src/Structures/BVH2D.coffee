@@ -19,6 +19,10 @@ class BDS.BVH2D
     # FIXME: In hindsite, this xyz thing is silly, since we should just use the minnimizing axis.
     constructor: (polygons, xy) ->
 
+        # Empty BVH constructor.
+        if polygons == undefined
+            polygons = []
+
         if not xy
             xy = {val: 'x'}
 
@@ -446,3 +450,6 @@ class BDS.BVH2D
         @_AABB = @_left._AABB.union(@_right._AABB)
 
         return true
+
+    toBoundingBox: () ->
+        return @_AABB.clone()

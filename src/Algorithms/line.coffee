@@ -18,6 +18,7 @@ class BDS.Line
 
         # The canonical array of points.
         # This may also be used externally for partitioning sets of lines for intersection detection.
+        # BDS.Point[]
         @points = point_array
 
         @p1 = @points[@p1_index]
@@ -33,6 +34,8 @@ class BDS.Line
         # The indices of the points.
         @split_points_indices = []
 
+        # Used for applications that don't need the point indices, such as partitioning applications.
+        @split_points = []
 
     ###
     intersects the given other_line with this line.
@@ -44,8 +47,9 @@ class BDS.Line
 
         # Already Previously Connected.
         # Connected at a joint in the input polyline.
-        if @p1_index == other.p1_index or @p1_index == other.p2_index or
-           @p2_index == other.p1_index or @p2_index == other.p2_index
+        if @points == other.points and # Only applies to segments from the same partition.
+           (@p1_index == other.p1_index or @p1_index == other.p2_index or
+           @p2_index == other.p1_index or @p2_index == other.p2_index)
             return false
 
         # No intersection.
@@ -80,13 +84,12 @@ class BDS.Line
             # Saves work.
             lines_out.push(@)
             return
-        
 
         # First sort points.
         @_sort_split_points()
 
         # Make sure the last line is pushed.
-        # This ensures that that initial line will be pushed if this line has no intersections.
+        # This ensures that the initial line will be pushed if this line has no intersections.
         @split_points_indices.push(@p2_index)
 
         # Append all of the line's segments to the inputted array.
@@ -106,6 +109,17 @@ class BDS.Line
 
         # Done.
         return
+
+    getSplitPoints: () ->
+
+        out = []
+
+        for pi in @split_points_indices
+            pt = @points[pi]
+            out.push(pt)
+
+        return out
+
 
     ###
     This function should only be called after a call to intersect has returned true.
@@ -179,6 +193,7 @@ class BDS.Line
                        (a_opposites and b_on) or
                        (a_on and b_opposites)
         ###
+        return false
 
     ###
     Line -> void.
@@ -232,9 +247,15 @@ class BDS.Line
         # Get the next index that will be used to store the newly created point.
         index = @points.length
         @points.push(intersection_point)
-
         @split_points_indices.push(index)
+        
+        # Duplicate the point in the other's point array if the arrays are different.
+        if other.points != @points
+            index = other.points.length
+            other.points.push(intersection_point)
+
         other.split_points_indices.push(index)
+
 
     # Clears away all intersection data.
     clearIntersections: () ->

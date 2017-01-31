@@ -58,7 +58,7 @@ class BDS.Intersector
     non_intersection_indices demarcate ranges of indices that should not be intersected against each other.
     Assumes that the indices are in rted order.
     ###
-    detect_intersection_line_segments_partitioned: (lines, partition_indices) ->
+    detect_intersection_line_segments_partitioned: (lines) ->
 
         # Stores all of the line enter and exit events.
         event_queue = new BDS.Intersector.EventPQ(lines)
@@ -80,7 +80,7 @@ class BDS.Intersector
                     line = event.line
 
                     # Return true as there is a valid intersection that is detected.
-                    if sweepSet.detect_intersection_with_line_partitioned(line, partition_indices)
+                    if sweepSet.detect_intersection_with_line_partitioned(line)
                         return true
 
                     sweepSet.add(event.twin)
@@ -92,6 +92,39 @@ class BDS.Intersector
 
         return false
 
+    intersect_line_segments_partitioned: (lines) ->
+
+        # Stores all of the line enter and exit events.
+        event_queue = new BDS.Intersector.EventPQ(lines)
+
+        # Stores all of the lines currently spanning the sweep line.
+        # We can use a heap for intersection tests across all of the lines and easy deletion of the exiting events.
+        # or we can use a Binary search tree where we can furthur bound the possible intersections in a second dimension.
+        # I am currently using a simpler heap approach, which is easier to implement.
+        # We will assign tuples based on exit locations.
+        sweepSet   = new BDS.Intersector.LineSweepSet()
+
+        len = event_queue.size()
+
+        #while(!event_queue.isEmpty())
+        # Process every entrance and exit event.
+        for i in [0...len] by 1#(int i = 0; i < len; i++)
+
+            event = event_queue.delMin()
+
+            switch (event.type)
+            
+                when BDS.Intersector.Event.ENTER
+                    line = event.line
+                    sweepSet.intersect_with_line_partitioned(line)
+                    sweepSet.add(event.twin)# Add the cooresponding exit event.
+                    continue
+
+                when BDS.Intersector.Event.EXIT
+                    sweepSet.remove(event)
+                    continue
+        return
+
     ###
     Slower, but more robust version of intersect.
     Naive N^2 Intersection Algorithm.
@@ -102,10 +135,24 @@ class BDS.Intersector
         for a in [0 ...numLines] by 1#(int a = 0; a < numLines; a++)
             for b in [a + 1 ...numLines] by 1#(int b = a + 1; b < numLines; b++)
 
-                lines[a].intersect(lines[b])
+                line1 = lines[a]
+                line2 = lines[b]
+
+                if line1.points != line2.points
+                    line1.intersect(line2)
 
         return
 
+    intersect_brute_force_partitioned: (lines) ->
+        
+        numLines = lines.length
+
+        for a in [0 ...numLines] by 1#(int a = 0; a < numLines; a++)
+            for b in [a + 1 ...numLines] by 1#(int b = a + 1; b < numLines; b++)
+
+                lines[a].intersect(lines[b])
+
+        return
 
 ###
 Event Priority Queue methods.
@@ -258,6 +305,18 @@ class BDS.Intersector.LineSweepSet
             event = @heap.getElem(i)
             line_crossing_sweep = event.line
             input_line.intersect(line_crossing_sweep)
+
+    intersect_with_line_partitioned: (input_line) ->
+        len = @heap.size()
+        for i in [0...len]
+            event = @heap.getElem(i)
+            line_crossing_sweep = event.line
+
+            # Same Partition, ignore this pair.
+            if line_crossing_sweep.points == input_line.points
+                continue
+
+            input_line.intersect(line_crossing_sweep)        
 
     # Returns truee if their is an intersection between two lines from seperate point lists.
     # Partition is done based on pointer equality for the point's lists.

@@ -161,21 +161,32 @@ class BDS.Polyline
 
         output = []
 
+        points = @toPoints();
+
         len = @_points.length
         for i in [0...len - 1] by 1
-            line = new BDS.Line(i, i + 1, @_points)
+            line = new BDS.Line(i, i + 1, points)
             line.p1_index
             line.p2_index
             output.push(line)
 
         # Add the last point.
         if @_isClosed
-            line = new BDS.Line(len - 1, 0, @_points)
+            line = new BDS.Line(len - 1, 0, points)
             line.p1_index
             line.p2_index
             output.push(line)
 
         return output
+
+    toPoints: () ->
+
+        out = []
+
+        for pt in @_points
+            out.push(pt)
+
+        return out
 
     toRays: (output) ->
 
@@ -269,3 +280,29 @@ class BDS.Polyline
         intersector = new BDS.Intersector()
 
         return intersector.detect_intersection_line_segments_partitioned(all_lines)
+
+    report_intersections_with_polyline: (polyline) ->
+
+        lines1      = @_toLineSegments()
+        lines2      = polyline._toLineSegments()
+        all_lines   = lines1.concat(lines2)
+
+        intersector = new BDS.Intersector()
+
+        if lines1.length == 0
+            return []
+        points = lines1[0].points
+        length = points.length
+
+        # FIXME: Find out what the problem is!
+        intersector.intersect_line_segments_partitioned(all_lines)
+        #intersector.intersect_brute_force_partitioned(all_lines)
+
+        # All new points must be intersection points.
+        # We directly read them, rather than calling getPoint functions from the lines,
+        # because we want to avoid duplicates.
+        out = []
+        for i in [length...points.length] by 1
+            out.push(points[i])
+
+        return out
