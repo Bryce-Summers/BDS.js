@@ -74,6 +74,63 @@ class BDS.Polyline
     isFilled: () ->
         return @_isFilled
 
+    computeLength: () ->
+
+        out = 0.0
+
+        for i in [0...(@_points.length - 1)]
+            p0 = @_points[i]
+            p1 = @_points[i + 1]
+
+            out += p0.distanceTo(p1)
+        return out
+
+
+    computeCumulativeLengths: () ->
+
+        # Cumulative summation.
+        sum = 0.0
+        out = [] # partial length outputs.
+        out.push(sum)
+
+        for i in [0...(@_points.length - 1)] by 1
+            p0 = @_points[i]
+            p1 = @_points[i + 1]
+
+            sum += p0.distanceTo(p1)
+            out.push(sum)
+
+        return out
+
+    # Returns float[], where the ith entry is the direction of the segment
+    # from point i to i + 1.
+    # output is of length |points| - 1
+    computeTangentAngles: () ->
+
+        out = []
+
+        for i in [0...(@_points.length - 1)] by 1
+            p0 = @_points[i]
+            p1 = @_points[i + 1]
+
+            angle = Math.atan2(p1.y - p0.y, p1.x - p0.x)
+            out.push(angle)
+        return out
+
+    # Returns a |point - 1| length list of unit tangent vectors starting at each point.
+    computeUnitTangents: () ->
+
+        out = []
+
+        for i in [0...@_points.length - 1] by 1
+            p0 = @_points[i]
+            p1 = @_points[i + 1]
+
+            tangent = p1.sub(p0).normalize()
+            out.push(tangent)
+
+        return out
+
     ###
     * http://math.blogoverflow.com/2014/06/04/greens-theorem-and-area-of-polygons/
     * Computes the area of a 2D polygon directly from the polygon's coordinates.
@@ -306,3 +363,13 @@ class BDS.Polyline
             out.push(points[i])
 
         return out
+
+    # Reverses the points.
+    reverse: () ->
+
+        temp = []
+        len  = @_points.length
+        for i in [0...len] by 1
+            temp.push(@_points.pop())
+        
+        @_points = temp

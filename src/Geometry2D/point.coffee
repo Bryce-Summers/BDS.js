@@ -56,6 +56,10 @@ class BDS.Point
 
         return output
 
+    # Returns the euclidean distance from this point to the given point.
+    distanceTo: (pt) ->
+        return pt.sub(@).norm()
+
     magnitude: () ->
         return @norm()
 

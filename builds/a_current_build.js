@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 27-01-2017
+ *  Single File concatenated by Grunt Concatenate on 02-02-2017
  */
 /*
  * Defines namespaces.
@@ -1043,6 +1043,10 @@ add, sub, multScalar
       return output;
     };
 
+    Point.prototype.distanceTo = function(pt) {
+      return pt.sub(this).norm();
+    };
+
     Point.prototype.magnitude = function() {
       return this.norm();
     };
@@ -1180,6 +1184,55 @@ FIXME: Return proper point in polyline tests for complemented filled polylines.
 
     Polyline.prototype.isFilled = function() {
       return this._isFilled;
+    };
+
+    Polyline.prototype.computeLength = function() {
+      var i, j, out, p0, p1, ref;
+      out = 0.0;
+      for (i = j = 0, ref = this._points.length - 1; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
+        p0 = this._points[i];
+        p1 = this._points[i + 1];
+        out += p0.distanceTo(p1);
+      }
+      return out;
+    };
+
+    Polyline.prototype.computeCumulativeLengths = function() {
+      var i, j, out, p0, p1, ref, sum;
+      sum = 0.0;
+      out = [];
+      out.push(sum);
+      for (i = j = 0, ref = this._points.length - 1; j < ref; i = j += 1) {
+        p0 = this._points[i];
+        p1 = this._points[i + 1];
+        sum += p0.distanceTo(p1);
+        out.push(sum);
+      }
+      return out;
+    };
+
+    Polyline.prototype.computeTangentAngles = function() {
+      var angle, i, j, out, p0, p1, ref;
+      out = [];
+      for (i = j = 0, ref = this._points.length - 1; j < ref; i = j += 1) {
+        p0 = this._points[i];
+        p1 = this._points[i + 1];
+        angle = Math.atan2(p1.y - p0.y, p1.x - p0.x);
+        out.push(angle);
+      }
+      return out;
+    };
+
+    Polyline.prototype.computeUnitTangents = function() {
+      var i, j, out, p0, p1, ref, tangent;
+      out = [];
+      for (i = j = 0, ref = this._points.length - 1; j < ref; i = j += 1) {
+        p0 = this._points[i];
+        p1 = this._points[i + 1];
+        tangent = p1.sub(p0).normalize();
+        out.push(tangent);
+      }
+      return out;
     };
 
 
@@ -1386,6 +1439,16 @@ FIXME: Return proper point in polyline tests for complemented filled polylines.
         out.push(points[i]);
       }
       return out;
+    };
+
+    Polyline.prototype.reverse = function() {
+      var i, j, len, ref, temp;
+      temp = [];
+      len = this._points.length;
+      for (i = j = 0, ref = len; j < ref; i = j += 1) {
+        temp.push(this._points.pop());
+      }
+      return this._points = temp;
     };
 
     return Polyline;
@@ -2558,7 +2621,7 @@ This should be used for more space efficient queues, stacks, or just iteration l
 
     SingleLinkedList.prototype.clear = function() {
       this._size = 0;
-      this._head = new BDS.ListNode(null);
+      this._head = new BDS.ListNode(null, null);
       return this._tail = this._head;
     };
 
@@ -2607,7 +2670,7 @@ This should be used for more space efficient queues, stacks, or just iteration l
     };
 
     SingleLinkedList.prototype.iterator = function() {
-      return new ListIterator(this._head, this);
+      return new BDS.ListIterator(this._head, this);
     };
 
     SingleLinkedList.prototype.isEmpty = function() {
@@ -2637,6 +2700,9 @@ This should be used for more space efficient queues, stacks, or just iteration l
     function ListNode(data, next) {
       this.data = data;
       this.next = next;
+      if (this.next === void 0) {
+        this.next = null;
+      }
     }
 
     return ListNode;
@@ -2671,7 +2737,7 @@ This should be used for more space efficient queues, stacks, or just iteration l
       this._last.data = this._node.data;
       this._last.next = this._node.next;
       if (this._node.next === null) {
-        this._list.tail = this._last;
+        this._list._tail = this._last;
       }
       this._node = this._last;
       return this._list._size--;
