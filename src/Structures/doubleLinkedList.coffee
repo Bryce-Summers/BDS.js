@@ -91,6 +91,8 @@ class BDS.DoubleLinkedList
         node.next.prev = node.prev
         node.prev.next = node.next
 
+        @_size--
+
         return
     
     # Pushes all of the input element onto the list in the back.

@@ -161,16 +161,19 @@ class BDS.Polyline
 
         output = []
 
-        len = @_points.length
+        # First we copy the points array.
+        points = @_points.slice(0)
+
+        len = points.length
         for i in [0...len - 1] by 1
-            line = new BDS.Line(i, i + 1, @_points)
+            line = new BDS.Line(i, i + 1, points)
             line.p1_index
             line.p2_index
             output.push(line)
 
         # Add the last point.
         if @_isClosed
-            line = new BDS.Line(len - 1, 0, @_points)
+            line = new BDS.Line(len - 1, 0, points)
             line.p1_index
             line.p2_index
             output.push(line)
@@ -269,3 +272,55 @@ class BDS.Polyline
         intersector = new BDS.Intersector()
 
         return intersector.detect_intersection_line_segments_partitioned(all_lines)
+
+    # Returns a list of all BDS.Point intersection locations.
+    # FIXME: This function probably returns duplicate points right now.
+    report_intersections_with_polyline: (polyline) ->
+        
+        # Convert both polylines to line segments.
+        lines1 = @_toLineSegments()
+        lines2 = polyline._toLineSegments()
+
+        all_lines = lines1.concat(lines2)
+
+        intersector = new BDS.Intersector()
+        intersector.intersectLineSegments(all_lines)
+
+        out = []
+
+        # Now we read off the intersection locations.
+        for line in all_lines
+            line.getAllIntersectionPoints(out)
+
+        return out
+
+
+    # Splits this polyline into 2 parts after the given index.
+    # [first part will have the given pt at the end,
+    #  the second part will have the given pt at the beginning]
+    # split_index is optional and will default to 0.
+    # Assumes this polyline
+    splitPolyline: (pt, split_index) ->
+
+        if split_index == undefined
+            split_index = 0
+
+        left  = []
+        right = []
+
+        for i in [0..split_index]
+            left.push(@_points[i])
+
+        # Push the splitting point to the end of the end of the left partition
+        # and the beginning of the right partition.
+        left.push(pt)
+        right.push(pt)
+
+        for i in [split_index + 1 ...@_points.length]
+            right.push(@_points[i])
+
+        left_out  = new Polyline(false, left)
+        right_out = new Polyline(false, right)
+
+        return [left_out, right_out]
+

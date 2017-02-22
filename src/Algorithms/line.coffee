@@ -44,8 +44,11 @@ class BDS.Line
 
         # Already Previously Connected.
         # Connected at a joint in the input polyline.
-        if @p1_index == other.p1_index or @p1_index == other.p2_index or
-           @p2_index == other.p1_index or @p2_index == other.p2_index
+        if @points == other.points and
+           (
+               @p1_index == other.p1_index or @p1_index == other.p2_index or
+               @p2_index == other.p1_index or @p2_index == other.p2_index
+           )
             return false
 
         # No intersection.
@@ -114,8 +117,18 @@ class BDS.Line
     void -> Point.
     ###
     getLatestIntersectionPoint: () ->
-    
         return @points[@points.length - 1]
+
+    # Returns a BDS.Point[]
+    # Appends them to the given array if given. [Optional]
+    getAllIntersectionPoints: (out) ->
+        if out == undefined
+            out = []
+
+        for index in @split_points_indices
+            out.push(@points[index])
+
+        return out
     
     ###
     Internally sorts the split points from the start to the end of this line.
@@ -234,7 +247,10 @@ class BDS.Line
         @points.push(intersection_point)
 
         @split_points_indices.push(index)
-        other.split_points_indices.push(index)
+
+        #other.split_points_indices.push(index)
+
+        # FIXME: I think we need to push the list and index for these guys.
 
     # Clears away all intersection data.
     clearIntersections: () ->

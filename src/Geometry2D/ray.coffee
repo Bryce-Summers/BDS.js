@@ -57,3 +57,5 @@ class BDS.Ray
     line_side_test: (c) ->
         return (@p2.x - @p1.x)*(c.y - @p1.y) - (@p2.y - @p1.y)*(c.x - @p1.x)
 
+    getAngle: () ->
+        return Math.atan2(@p2.y - @p1.y, @p2.x - @p1.x)

@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 13-01-2017
+ *  Single File concatenated by Grunt Concatenate on 21-02-2017
  */
 /*
  * Defines namespaces.
@@ -345,7 +345,7 @@ Please use Polylines for the geometric representation and drawing of lines.
      */
 
     Line.prototype.intersect = function(other) {
-      if (this.p1_index === other.p1_index || this.p1_index === other.p2_index || this.p2_index === other.p1_index || this.p2_index === other.p2_index) {
+      if (this.points === other.points && (this.p1_index === other.p1_index || this.p1_index === other.p2_index || this.p2_index === other.p1_index || this.p2_index === other.p2_index)) {
         return false;
       }
       if (!this.detect_intersection(other)) {
@@ -402,6 +402,19 @@ Please use Polylines for the geometric representation and drawing of lines.
 
     Line.prototype.getLatestIntersectionPoint = function() {
       return this.points[this.points.length - 1];
+    };
+
+    Line.prototype.getAllIntersectionPoints = function(out) {
+      var index, j, len1, ref;
+      if (out === void 0) {
+        out = [];
+      }
+      ref = this.split_points_indices;
+      for (j = 0, len1 = ref.length; j < len1; j++) {
+        index = ref[j];
+        out.push(this.points[index]);
+      }
+      return out;
     };
 
 
@@ -501,8 +514,7 @@ Please use Polylines for the geometric representation and drawing of lines.
       }
       index = this.points.length;
       this.points.push(intersection_point);
-      this.split_points_indices.push(index);
-      return other.split_points_indices.push(index);
+      return this.split_points_indices.push(index);
     };
 
     Line.prototype.clearIntersections = function() {
@@ -1202,17 +1214,18 @@ FIXME: Return proper point in polyline tests for complemented filled polylines.
     };
 
     Polyline.prototype._toLineSegments = function() {
-      var i, j, len, line, output, ref;
+      var i, j, len, line, output, points, ref;
       output = [];
-      len = this._points.length;
+      points = this._points.slice(0);
+      len = points.length;
       for (i = j = 0, ref = len - 1; j < ref; i = j += 1) {
-        line = new BDS.Line(i, i + 1, this._points);
+        line = new BDS.Line(i, i + 1, points);
         line.p1_index;
         line.p2_index;
         output.push(line);
       }
       if (this._isClosed) {
-        line = new BDS.Line(len - 1, 0, this._points);
+        line = new BDS.Line(len - 1, 0, points);
         line.p1_index;
         line.p2_index;
         output.push(line);
@@ -1290,6 +1303,41 @@ FIXME: Return proper point in polyline tests for complemented filled polylines.
       return intersector.detect_intersection_line_segments_partitioned(all_lines);
     };
 
+    Polyline.prototype.report_intersections_with_polyline = function(polyline) {
+      var all_lines, intersector, j, len1, line, lines1, lines2, out;
+      lines1 = this._toLineSegments();
+      lines2 = polyline._toLineSegments();
+      all_lines = lines1.concat(lines2);
+      intersector = new BDS.Intersector();
+      intersector.intersectLineSegments(all_lines);
+      out = [];
+      for (j = 0, len1 = all_lines.length; j < len1; j++) {
+        line = all_lines[j];
+        line.getAllIntersectionPoints(out);
+      }
+      return out;
+    };
+
+    Polyline.prototype.splitPolyline = function(pt, split_index) {
+      var i, j, k, left, left_out, ref, ref1, ref2, right, right_out;
+      if (split_index === void 0) {
+        split_index = 0;
+      }
+      left = [];
+      right = [];
+      for (i = j = 0, ref = split_index; 0 <= ref ? j <= ref : j >= ref; i = 0 <= ref ? ++j : --j) {
+        left.push(this._points[i]);
+      }
+      left.push(pt);
+      right.push(pt);
+      for (i = k = ref1 = split_index + 1, ref2 = this._points.length; ref1 <= ref2 ? k < ref2 : k > ref2; i = ref1 <= ref2 ? ++k : --k) {
+        right.push(this._points[i]);
+      }
+      left_out = new Polyline(false, left);
+      right_out = new Polyline(false, right);
+      return [left_out, right_out];
+    };
+
     return Polyline;
 
   })();
@@ -1344,6 +1392,10 @@ Purpose:
 
     Ray.prototype.line_side_test = function(c) {
       return (this.p2.x - this.p1.x) * (c.y - this.p1.y) - (this.p2.y - this.p1.y) * (c.x - this.p1.x);
+    };
+
+    Ray.prototype.getAngle = function() {
+      return Math.atan2(this.p2.y - this.p1.y, this.p2.x - this.p1.x);
     };
 
     return Ray;
@@ -1789,6 +1841,7 @@ Purpose:
       }
       node.next.prev = node.prev;
       node.prev.next = node.next;
+      this._size--;
     };
 
     DoubleLinkedList.prototype.append = function(array) {
