@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 21-02-2017
+ *  Single File concatenated by Grunt Concatenate on 23-02-2017
  */
 /*
  * Defines namespaces.
@@ -1411,6 +1411,9 @@ Purpose:
 
     function BVH2D(polygons, xy) {
       var i, j, left_partition, ref, ref1, right_partition;
+      if (!polygons) {
+        polygons = [];
+      }
       if (!xy) {
         xy = {
           val: 'x'

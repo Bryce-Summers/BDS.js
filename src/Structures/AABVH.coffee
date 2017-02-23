@@ -13,11 +13,17 @@ class BDS.BVH2D
 
     @MAX_OBJECTS_PER_LEAF = 4
 
-    # Contructed from the tree rooted at the given THREE.Object3D node.
+    # Contructed from a list of polygons, that have associated data members.
+    # polyline.setAssociatedData(obj) should be used to associate data.        
+    # polyline.getAssociatedData() should be used to retrieve the associated data.
     # polygons is a BDS.Polyline()
     # xy = {val: 'x' or 'y'}
     # FIXME: In hindsite, this xyz thing is silly, since we should just use the minnimizing axis.
+    # I would reccomend not using it, because we will eventually phase it out.
     constructor: (polygons, xy) ->
+
+        if not polygons
+            polygons = []
 
         if not xy
             xy = {val: 'x'}
