@@ -3,9 +3,7 @@
  * Written as part of the Bryce Summers Javascript Data Structures Libary.
  * Written by Bryce Summers on 6/12/2015.
  * Adapted by Bryce on 1 - 3 - 2017.
-
 This should be used for more space efficient queues, stacks, or just iteration lists that support removal during iteration, such as in a game loop.
-
 ###
  
 class BDS.SingleLinkedList
@@ -16,7 +14,7 @@ class BDS.SingleLinkedList
     clear: () ->
     
         @_size = 0;
-        @_head = new BDS.ListNode(null);
+        @_head = new BDS.ListNode(null, null);
     
         # tail will always point to a null node at the end, this keeps things simple.
         @_tail = @_head;
@@ -63,7 +61,7 @@ class BDS.SingleLinkedList
     
     # Removes an element from the beginning of the list.
     dequeue: () -> @pop()
-    iterator: () -> new ListIterator(@_head, @);
+    iterator: () -> new BDS.ListIterator(@_head, @);
     isEmpty: () -> this.size == 0
     size: () -> @_size
     
@@ -83,13 +81,17 @@ class BDS.ListNode
     # A link to the next node in the list.
     constructor: (@data, @next) ->
 
+        if @next == undefined
+            @next = null
+
 class BDS.ListIterator
 
     # Input: BDS.ListNode node.
     constructor: (@_node, @_list) ->
         this.last = @_node
 
-    # Boolean : return true if their is another element that we have not iterated to yet.
+    # Boolean : return true if their is another non-null node 
+    # that we have not iterated to yet.
     hasNext: () -> @_node.next != null
 
     # Returns the next element in the linked list.
@@ -116,7 +118,7 @@ class BDS.ListIterator
         
         if @_node.next == null
         
-            @_list.tail = @_last
+            @_list._tail = @_last
         
         @_node = @_last
         @_list._size--

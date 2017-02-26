@@ -56,6 +56,9 @@ class BDS.BVH2D
         @_left  = new BDS.BVH2D(left_partition,  xy)
         @_right = new BDS.BVH2D(right_partition, xy)
 
+    toBoundingBox: () ->
+        return @_AABB.clone()
+
     # Used in things like tree compression and rebalancing.
     # BDS.BVH2D -> copies all fields into this node.
     _copy_from: (bvh) ->
