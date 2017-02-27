@@ -23,6 +23,8 @@ class BDS.Line
         @p1 = @points[@p1_index]
         @p2 = @points[@p2_index]
 
+        debugger if @p2 is undefined
+
         @offset = @p2.sub(@p1)
 
         # Float[]
@@ -33,6 +35,33 @@ class BDS.Line
         # The indices of the points.
         @split_points_indices = []
 
+        ### reserved space for attribute data that may be associated to 
+        # higher order information about where the intersection occured.
+        @_curve = undefined # A curve that this Line was sampled from.
+        @_time1, @_time2 # The start and ending parameters.
+        ###
+
+    # Intersection lines may be associated with curves.
+    setAssociatedCurve: (obj) ->
+        @_curve = obj
+        return
+
+    getAssociatedCurve: () ->
+        return @_curve
+
+    hasAssociatedCurve: () ->
+        return @_curve != undefined
+
+    # They may then be associated with parameters.
+    setTimes: (time1, time2) ->
+        @_time1 = time1
+        @_time2 = time2
+        return
+
+    # Returns the start and ending parameter values.
+    getTimes: () ->
+        return undefined if @_time1 is undefined
+        return [@_time1, @_time2]
 
     ###
     intersects the given other_line with this line.
@@ -83,7 +112,12 @@ class BDS.Line
             # Saves work.
             lines_out.push(@)
             return
-        
+
+        # Derive times for the splits.        
+        ass_data = false # Should we associate the data or not.
+        if @_time1 and @_time2
+            ass_data = true
+            times = @getAllIntersectionTimes(times)
 
         # First sort points.
         @_sort_split_points()
@@ -96,16 +130,28 @@ class BDS.Line
         last_indice = @split_points_indices[0]
 
         # The initial line.
-        lines_out.push(new BDS.Line(@p1_index, last_indice, @points))
+        i_line = new BDS.Line(@p1_index, last_indice, @points)
+        if ass_data
+            i_line.setAssociatedCurve(@_curve)
+            i_line.setTimes(@_time1, times[0])
+        lines_out.push(i_line)
 
         # for i = 1; i < len; i++
         for i in [1...len]
             next_indice = @split_points_indices[i]
-            lines_out.push(new BDS.Line(last_indice, next_indice, @points))
+            i_line = new BDS.Line(last_indice, next_indice, @points)
+            if ass_data
+                i_line.setAssociatedCurve(@_curve)
+                i_line.setTimes(times[i - 1], times[i])
+            lines_out.push(i_line)
             last_indice = next_indice
 
         # The last line.
-        lines_out.push(new BDS.Line(last_indice, @p2_index, @points))
+        i_line = new BDS.Line(last_indice, @p2_index, @points)
+        if ass_data
+            i_line.setAssociatedCurve(@_curve)
+            i_line.setTimes(times[len - 1], @_time2)
+        lines_out.push(i_line)
 
         # Done.
         return
@@ -129,6 +175,17 @@ class BDS.Line
             out.push(@points[index])
 
         return out
+
+    getAllIntersectionTimes: (out) ->
+
+        if out == undefined
+            out = []
+
+        for per in @split_points_per
+            out.push(BDS.Math.lerp(@_time1, @_time2, per))
+
+        return out
+
     
     ###
     Internally sorts the split points from the start to the end of this line.
@@ -248,7 +305,8 @@ class BDS.Line
 
         @split_points_indices.push(index)
 
-        #other.split_points_indices.push(index)
+        # FIXME: This line needs to be ommited for some examples and given for others.
+        other.split_points_indices.push(index)
 
         # FIXME: I think we need to push the list and index for these guys.
 

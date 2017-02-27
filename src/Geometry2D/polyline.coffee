@@ -36,6 +36,7 @@ class BDS.Polyline
         @_boundingbox = null
         @_lineBVH = null
         @_obj # Associated Obj.
+        @_times # List of parameter values that associated point for point.
         ###
 
     appendPoints: (array) ->
@@ -125,9 +126,23 @@ class BDS.Polyline
 
     setAssociatedData: (obj) ->
         @_obj = obj
+        return
 
     getAssociatedData: () ->
         return @_obj
+
+    # Associates a list of times with each point on this polyline.
+    setTimes: (times) ->
+        if times.length != @_points.length
+            debugger
+            err = new Error()
+            console.log(err.stacktrace())
+            throw err
+
+        @_times = times
+
+    getTimes: (times) ->
+        return @_times
 
     ###
     getBVH: () ->

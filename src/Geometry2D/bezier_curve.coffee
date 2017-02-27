@@ -12,37 +12,81 @@
 #
 # Currently we are implementing this as a reduction to THREE.CatmullRomCurve3, but we may remove the dependancy if we have time and go sufficiently beyond it.
 # FIXME: Sandardize the curve class and instantiate it from interfacial curves.
-class BDS.Curve
+class BDS.Bezier_Curve
 
-    constructor: (spline) ->
+    constructor: (pt1, tan1, pt2, tan2, input_coefs) ->
 
-        # A spline that dynamically parameterizes itself to between 0 and 1.
-        @_spline = spline
+        # Optional boolean may be used to set inputs to A, B, C, D
+        if input_coefs != undefined and input_coefs == true
+            @_A = pt1.clone()
+            @_B = tan1.clone()
+            @_C = pt2.clone()
+            @_D = tan2.clone()
+            return
 
-        # A list of points in the discretization.
-        @_point_discretization = []
+        # otherwise use point, tangent input convention.
 
-    # p : THREE.Vector3.
-    addPoint: (p) ->
-        @_spline.points.push(p)
+        # Compute the Coefficients of the Cubic Polynomial.
+        @_A = pt1.multScalar( 2).sub(pt2.multScalar(2)).add(tan1).add(tan2)
+        @_B = pt1.multScalar(-3).add(pt2.multScalar(3)).sub(tan1.multScalar(2)).sub(tan2)
+        @_C = tan1.clone()
+        @_D = pt1.clone()
 
-    numPoints: (p) ->
-        return @_spline.points.length
+    # Returns a Bezier Curve representing this curve from the earliest time bound to the latest time bound.
+    subCurve: (t1, t2) ->
 
-    getPointAtIndex: (i) ->
-        return @_spline.points[i]
+        # x in [0, 1]
+        # Original curve f(x) = Ax^3 + Bx^2 + Cx + D
+        # Sub curve g(x) = f(lerp(t1, t2, x))
+        # g(x) = A[-t1^3 + t2^3 - 3t1*t2^2 + 3t1^2*t2] x^3 +
+        #        A[        t1^3 + 3t1*t2^2 - 6t1^2*t2] x^2 +
+        #        B[              t1^2 + t2^2 - 2t1*t2] x^2 +
+        #        A[-3t1^3 + 3t1^2*t2] x   + 
+        #        B[  -2t1^2 + 2t1*t2] x   +
+        #        C[          t2 - t1] x   +
+        #        A[t1^3] +
+        #        B[t1^2] +
+        #        C[t1] +
+        #        D
 
-    getLastPoint: () ->
-        return @getPointAtIndex(@numPoints() - 1)
+        t1_2 = t1*t1
+        t1_3 = t1*t1*t1
+        t2_2 = t2*t2
+        t2_3 = t2*t2*t2
 
-    removeLastPoint: () ->
-        return @_spline.points.pop()
+        # A
+        scale_a = -t1_3 + t2_3 - 3*t1*t2_2 + 3*t1_2*t2
+        A_new = @_A.multScalar(scale_a)
 
+        # B
+        scale_a = t1_3 + 3*t1*t2_2 - 6*t1_2*t2
+        scale_b = t1_2 + t2_2 - 2*t1*t2
+        B_new = @_A.multScalar(scale_a).add(@_B.multScalar(scale_b))
+
+        # C
+        scale_a = -3*t1_3 + 3*t1_2*t2
+        scale_b = -2*t1_2 + 2*t1*t2
+        scale_c = t2 - t1
+        C_new = @_A.multScalar(scale_a).add(@_B.multScalar(scale_b)).add(@_C.multScalar(scale_c))
+
+        # D
+        scale_a = t1_3
+        scale_b = t1_2
+        scale_c = t1
+        scale_d = 1
+        D_new = @_A.multScalar(scale_a).add(@_B.multScalar(scale_b)).add(@_C.multScalar(t1)).add(@_D)
+
+        output = new BDS.Bezier_Curve(A_new, B_new, C_new, D_new, true)
+
+        return output
+
+    # At^3 + Bt^2 + Ct + D
     position: (t) ->
-        return @_spline.getPoint(t)
+        return @_A.multScalar(t).add(@_B).multScalar(t).add(@_C).multScalar(t).add(@_D)
 
+    # 3At^2 + 2Bt + C
     tangent: (t) ->
-        return @_spline.getTangent(t)
+        return @_A.multScalar(3*t).add(@_B.multScalar(2)).multScalar(t).add(@_C)
 
     offset: (t, amount) ->
 
@@ -57,8 +101,6 @@ class BDS.Curve
         
         return @position(t).add(tan);
 
-
-
     # Returns a list of points representing this spline.
     # They will be no more than max_length apart.
     # They will be as sparse as is practical. # FIXME: Do some studying of this.
@@ -67,19 +109,18 @@ class BDS.Curve
     # It may produce up to 2 times as many points though...
     # FIXME: Do an analysis of differnt spline discretization techniques.
     # I believe I will compensate for this algorithms problems, by designing my user interactions such that when they click near the original spline, that is a signal to go back.
-    getDiscretization: (max_length) ->
-        return @_discretization
+    toPolyline: (max_length_per_segment, times_output) ->
 
-    updateDiscretization: (max_length) ->
         output = []
-        p0 = @_spline.getPoint(0)
+        p0 = @position(0)
         output.push(p0)
+        times_output.push(0) if times_output
 
         S = [] # Stack.
         S.push(1.0)
         
         low   = 0
-        p_low = @_spline.getPoint(low)
+        p_low = @position(low)
 
         # The stack stores the right next upper interval.
         # The lower interval starts at 0 and is set to the upper interval
@@ -89,21 +130,22 @@ class BDS.Curve
         while S.length != 0
         
             high   = S.pop()
-            p_high = @_spline.getPoint(high)
+            p_high = @position(high)
         
             # Subdivision is sufficient, move on to the next point.
-            while p_low.distanceTo(p_high) > max_length
+            while p_low.distanceTo(p_high) > max_length_per_segment
                 # Otherwise subdivide the interval and keep going.
                 S.push(high)
                 high   = (low + high)/2.0
-                p_high = @_spline.getPoint(high)
+                p_high = @position(high)
         
             output.push(p_high)
+            times_output.push(high) if times_output
             low   = high
             p_low = p_high
             continue
 
-        @_discretization = output
+        return new BDS.Polyline(false, output)
 
     # max_length:float, maximum length out output segment.
     # amount: the distance the offset curve is away from the main curve. positive or negative is fine.
