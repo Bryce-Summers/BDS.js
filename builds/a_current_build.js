@@ -26,6 +26,11 @@ Standard Array methods.
 
   BDS.Arrays.binarySearch = function(array, elem_target, comparator) {
     var elem_current, max, mid, min;
+    if (comparator === void 0) {
+      comparator = function(a, b) {
+        return a <= b;
+      };
+    }
     min = 0;
     max = array.length - 1;
     mid = Math.floor(max / 2);
@@ -1332,6 +1337,10 @@ FIXME: Return proper point in polyline tests for complemented filled polylines.
       return this._points.pop();
     };
 
+    Polyline.prototype.getLastPoint = function() {
+      return this._points[this._points.length - 1];
+    };
+
     Polyline.prototype.getPoint = function(index) {
       return this._points[index];
     };
@@ -1346,6 +1355,77 @@ FIXME: Return proper point in polyline tests for complemented filled polylines.
 
     Polyline.prototype.isFilled = function() {
       return this._isFilled;
+    };
+
+    Polyline.prototype.computeLength = function() {
+      var i, j, out, p0, p1, ref;
+      out = 0.0;
+      for (i = j = 0, ref = this._points.length - 1; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
+        p0 = this._points[i];
+        p1 = this._points[i + 1];
+        out += p0.distanceTo(p1);
+      }
+      return out;
+    };
+
+    Polyline.prototype.getLastSegmentDistance = function() {
+      var len, p1, p2;
+      len = this._points.length;
+      if (len < 2) {
+        return 0;
+      }
+      p1 = this._points[len - 2];
+      p2 = this._points[len - 1];
+      return p1.distanceTo(p2);
+    };
+
+    Polyline.prototype.getLastSegmentDirection = function() {
+      var len, p1, p2;
+      len = this._points.length;
+      if (len <= 1) {
+        throw new Error("Don't ever call this function when polyline.size() <= 1");
+      }
+      p1 = this._points[len - 2];
+      p2 = this._points[len - 1];
+      return p1.directionTo(p2);
+    };
+
+    Polyline.prototype.computeCumulativeLengths = function() {
+      var i, j, out, p0, p1, ref, sum;
+      sum = 0.0;
+      out = [];
+      out.push(sum);
+      for (i = j = 0, ref = this._points.length - 1; j < ref; i = j += 1) {
+        p0 = this._points[i];
+        p1 = this._points[i + 1];
+        sum += p0.distanceTo(p1);
+        out.push(sum);
+      }
+      return out;
+    };
+
+    Polyline.prototype.computeTangentAngles = function() {
+      var angle, i, j, out, p0, p1, ref;
+      out = [];
+      for (i = j = 0, ref = this._points.length - 1; j < ref; i = j += 1) {
+        p0 = this._points[i];
+        p1 = this._points[i + 1];
+        angle = Math.atan2(p1.y - p0.y, p1.x - p0.x);
+        out.push(angle);
+      }
+      return out;
+    };
+
+    Polyline.prototype.computeUnitTangents = function() {
+      var i, j, out, p0, p1, ref, tangent;
+      out = [];
+      for (i = j = 0, ref = this._points.length - 1; j < ref; i = j += 1) {
+        p0 = this._points[i];
+        p1 = this._points[i + 1];
+        tangent = p1.sub(p0).normalize();
+        out.push(tangent);
+      }
+      return out;
     };
 
 
@@ -1469,6 +1549,17 @@ FIXME: Return proper point in polyline tests for complemented filled polylines.
       return output;
     };
 
+    Polyline.prototype.toPoints = function() {
+      var j, len1, out, pt, ref;
+      out = [];
+      ref = this._points;
+      for (j = 0, len1 = ref.length; j < len1; j++) {
+        pt = ref[j];
+        out.push(pt);
+      }
+      return out;
+    };
+
     Polyline.prototype.toRays = function(output) {
       var dir, i, j, len, p0, p1, ref;
       if (output === void 0) {
@@ -1552,6 +1643,16 @@ FIXME: Return proper point in polyline tests for complemented filled polylines.
         line.getAllIntersectionPoints(out);
       }
       return out;
+    };
+
+    Polyline.prototype.reverse = function() {
+      var i, j, len, ref, temp;
+      temp = [];
+      len = this._points.length;
+      for (i = j = 0, ref = len; j < ref; i = j += 1) {
+        temp.push(this._points.pop());
+      }
+      return this._points = temp;
     };
 
     Polyline.prototype.splitPolyline = function(pt, split_index) {
@@ -1647,6 +1748,9 @@ Purpose:
 
     function BVH2D(polygons, xy) {
       var i, j, left_partition, ref, ref1, right_partition;
+      if (!polygons) {
+        polygons = [];
+      }
       if (!xy) {
         xy = {
           val: 'x'
@@ -1675,6 +1779,10 @@ Purpose:
       this._left = new BDS.BVH2D(left_partition, xy);
       this._right = new BDS.BVH2D(right_partition, xy);
     }
+
+    BVH2D.prototype.toBoundingBox = function() {
+      return this._AABB.clone();
+    };
 
     BVH2D.prototype._copy_from = function(bvh) {
       this._leaf_node = bvh._leaf_node;
@@ -2377,7 +2485,6 @@ Written by Bryce Summers on 11 - 2 - 2017.
  * Written as part of the Bryce Summers Javascript Data Structures Libary.
  * Written by Bryce Summers on 6/12/2015.
  * Adapted by Bryce on 1 - 3 - 2017.
-
 This should be used for more space efficient queues, stacks, or just iteration lists that support removal during iteration, such as in a game loop.
  */
 
@@ -2389,7 +2496,7 @@ This should be used for more space efficient queues, stacks, or just iteration l
 
     SingleLinkedList.prototype.clear = function() {
       this._size = 0;
-      this._head = new BDS.ListNode(null);
+      this._head = new BDS.ListNode(null, null);
       return this._tail = this._head;
     };
 
@@ -2438,7 +2545,7 @@ This should be used for more space efficient queues, stacks, or just iteration l
     };
 
     SingleLinkedList.prototype.iterator = function() {
-      return new ListIterator(this._head, this);
+      return new BDS.ListIterator(this._head, this);
     };
 
     SingleLinkedList.prototype.isEmpty = function() {
@@ -2468,6 +2575,9 @@ This should be used for more space efficient queues, stacks, or just iteration l
     function ListNode(data, next) {
       this.data = data;
       this.next = next;
+      if (this.next === void 0) {
+        this.next = null;
+      }
     }
 
     return ListNode;
@@ -2502,7 +2612,7 @@ This should be used for more space efficient queues, stacks, or just iteration l
       this._last.data = this._node.data;
       this._last.next = this._node.next;
       if (this._node.next === null) {
-        this._list.tail = this._last;
+        this._list._tail = this._last;
       }
       this._node = this._last;
       return this._list._size--;

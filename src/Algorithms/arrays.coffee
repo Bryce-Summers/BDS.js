@@ -15,6 +15,9 @@ BDS.Arrays.swap = (array, i1,i2) ->
 # comparator = (e1, e2) -> Returns true if e1 <= e2.
 BDS.Arrays.binarySearch = (array, elem_target, comparator) ->
 
+    if comparator == undefined
+        comparator = (a, b) -> a <= b
+
     min = 0 # The minnimum element that is guranteed to be <= than the target.
 
     max = array.length - 1 # the maximum element that could be <= the target.

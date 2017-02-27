@@ -62,6 +62,8 @@ class BDS.Polyline
     removeLastPoint: () ->
         return @_points.pop()
 
+    getLastPoint: () ->
+        return @_points[@_points.length - 1]
 
     getPoint: (index) ->
         return @_points[index]
@@ -74,6 +76,88 @@ class BDS.Polyline
 
     isFilled: () ->
         return @_isFilled
+
+    computeLength: () ->
+
+        out = 0.0
+
+        for i in [0...(@_points.length - 1)]
+            p0 = @_points[i]
+            p1 = @_points[i + 1]
+
+            out += p0.distanceTo(p1)
+        return out
+
+
+    getLastSegmentDistance: () ->
+        len = @_points.length
+
+        # No distance for no segment.
+        if len < 2
+            return 0
+
+        p1 = @_points[len - 2]
+        p2 = @_points[len - 1]
+
+        return p1.distanceTo(p2)
+
+    # Assumes points.length > 1
+    getLastSegmentDirection: () ->
+
+        len = @_points.length
+
+        if len <= 1
+            throw new Error("Don't ever call this function when polyline.size() <= 1")
+
+        p1 = @_points[len - 2]
+        p2 = @_points[len - 1]
+
+        return p1.directionTo(p2)
+
+    computeCumulativeLengths: () ->
+
+        # Cumulative summation.
+        sum = 0.0
+        out = [] # partial length outputs.
+        out.push(sum)
+
+        for i in [0...(@_points.length - 1)] by 1
+            p0 = @_points[i]
+            p1 = @_points[i + 1]
+
+            sum += p0.distanceTo(p1)
+            out.push(sum)
+
+        return out
+
+    # Returns float[], where the ith entry is the direction of the segment
+    # from point i to i + 1.
+    # output is of length |points| - 1
+    computeTangentAngles: () ->
+
+        out = []
+
+        for i in [0...(@_points.length - 1)] by 1
+            p0 = @_points[i]
+            p1 = @_points[i + 1]
+
+            angle = Math.atan2(p1.y - p0.y, p1.x - p0.x)
+            out.push(angle)
+        return out
+
+    # Returns a |point - 1| length list of unit tangent vectors starting at each point.
+    computeUnitTangents: () ->
+
+        out = []
+
+        for i in [0...@_points.length - 1] by 1
+            p0 = @_points[i]
+            p1 = @_points[i + 1]
+
+            tangent = p1.sub(p0).normalize()
+            out.push(tangent)
+
+        return out
 
     ###
     * http://math.blogoverflow.com/2014/06/04/greens-theorem-and-area-of-polygons/
@@ -195,6 +279,15 @@ class BDS.Polyline
 
         return output
 
+    toPoints: () ->
+
+        out = []
+
+        for pt in @_points
+            out.push(pt)
+
+        return out
+
     toRays: (output) ->
 
         if output == undefined
@@ -309,6 +402,15 @@ class BDS.Polyline
 
         return out
 
+    # Reverses the points.
+    reverse: () ->
+
+        temp = []
+        len  = @_points.length
+        for i in [0...len] by 1
+            temp.push(@_points.pop())
+        
+        @_points = temp
 
     # Splits this polyline into 2 parts after the given index.
     # [first part will have the given pt at the end,
