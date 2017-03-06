@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 28-02-2017
+ *  Single File concatenated by Grunt Concatenate on 05-03-2017
  */
 /*
  * Defines namespaces.
@@ -44,6 +44,14 @@ Standard Array methods.
       mid = Math.floor((min + max) / 2);
     }
     return min - 1;
+  };
+
+  BDS.Arrays.sortByValue = function(array) {
+    var compare_func;
+    compare_func = function(a, b) {
+      return a.value - b.value;
+    };
+    return array.sort(compare_func);
   };
 
 }).call(this);

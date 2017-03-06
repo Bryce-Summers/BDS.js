@@ -38,3 +38,11 @@ BDS.Arrays.binarySearch = (array, elem_target, comparator) ->
         mid = Math.floor((min + max)/2)
 
     return min - 1
+
+# Sorts an array of number, data associated pairs by their number.
+# {key: data, value: data_value}
+BDS.Arrays.sortByValue = (array) ->
+
+    compare_func = (a, b) -> return a.value - b.value
+
+    array.sort(compare_func)
