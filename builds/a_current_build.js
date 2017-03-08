@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 05-03-2017
+ *  Single File concatenated by Grunt Concatenate on 07-03-2017
  */
 /*
  * Defines namespaces.
@@ -350,6 +350,7 @@ Please use Polylines for the geometric representation and drawing of lines.
       this.offset = this.p2.sub(this.p1);
       this.split_points_per = [];
       this.split_points_indices = [];
+      this.primary_split_indices = [];
 
       /* reserved space for attribute data that may be associated to 
        * higher order information about where the intersection occured.
@@ -483,6 +484,19 @@ Please use Polylines for the geometric representation and drawing of lines.
       return out;
     };
 
+    Line.prototype.getPrimaryIntersectionPoints = function(out) {
+      var index, j, len1, ref;
+      if (out === void 0) {
+        out = [];
+      }
+      ref = this.primary_split_indices;
+      for (j = 0, len1 = ref.length; j < len1; j++) {
+        index = ref[j];
+        out.push(this.points[index]);
+      }
+      return out;
+    };
+
     Line.prototype.getAllIntersectionTimes = function(out) {
       var j, len1, per, ref;
       if (out === void 0) {
@@ -594,7 +608,12 @@ Please use Polylines for the geometric representation and drawing of lines.
       index = this.points.length;
       this.points.push(intersection_point);
       this.split_points_indices.push(index);
-      return other.split_points_indices.push(index);
+      this.primary_split_indices.push(index);
+      if (other.points !== this.points) {
+        index = other.points.length;
+        other.points.push(intersection_point);
+      }
+      other.split_points_indices.push(index);
     };
 
     Line.prototype.clearIntersections = function() {
@@ -1384,6 +1403,18 @@ FIXME: Return proper point in polyline tests for complemented filled polylines.
       return this._points[this._points.length - 1];
     };
 
+    Polyline.prototype.getLastDirection = function() {
+      return this._points[this._points.length - 2].directionTo(this._points[this._points.length - 1]);
+    };
+
+    Polyline.prototype.getFirstDirection = function() {
+      return this._points[1].directionTo(this._points[0]);
+    };
+
+    Polyline.prototype.getFirstPoint = function() {
+      return this._points[0];
+    };
+
     Polyline.prototype.getPoint = function(index) {
       return this._points[index];
     };
@@ -1431,6 +1462,17 @@ FIXME: Return proper point in polyline tests for complemented filled polylines.
       p1 = this._points[len - 2];
       p2 = this._points[len - 1];
       return p1.directionTo(p2);
+    };
+
+    Polyline.prototype.getLastSegment = function() {
+      var len, p1, p2;
+      len = this._points.length;
+      if (len <= 1) {
+        throw new Error("Don't ever call this function when polyline.size() <= 1");
+      }
+      p1 = this._points[len - 2];
+      p2 = this._points[len - 1];
+      return new BDS.Polyline(false, [p1, p2]);
     };
 
     Polyline.prototype.computeCumulativeLengths = function() {
@@ -1683,7 +1725,7 @@ FIXME: Return proper point in polyline tests for complemented filled polylines.
       out = [];
       for (j = 0, len1 = all_lines.length; j < len1; j++) {
         line = all_lines[j];
-        line.getAllIntersectionPoints(out);
+        line.getPrimaryIntersectionPoints(out);
       }
       return out;
     };

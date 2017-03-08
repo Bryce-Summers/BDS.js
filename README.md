@@ -30,4 +30,4 @@ compile once with coffee -o lib/ -c src/
  grunt
  
  
- It may be useful to install python 3 and run python -m http.server in a command prompt to run a local server.
+It may be useful to install python 3 and run python -m http.server in a command prompt to run a local server.

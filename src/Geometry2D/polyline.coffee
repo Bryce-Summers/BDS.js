@@ -65,6 +65,15 @@ class BDS.Polyline
     getLastPoint: () ->
         return @_points[@_points.length - 1]
 
+    getLastDirection: () ->
+        return @_points[@_points.length - 2].directionTo(@_points[@_points.length - 1])
+
+    getFirstDirection: () ->
+        return @_points[1].directionTo(@_points[0])
+
+    getFirstPoint: () ->
+        return @_points[0]
+
     getPoint: (index) ->
         return @_points[index]
 
@@ -113,6 +122,19 @@ class BDS.Polyline
         p2 = @_points[len - 1]
 
         return p1.directionTo(p2)
+
+    # Returns the last segment of this polyline.
+    getLastSegment: () ->
+        
+        len = @_points.length
+
+        if len <= 1
+            throw new Error("Don't ever call this function when polyline.size() <= 1")
+
+        p1 = @_points[len - 2]
+        p2 = @_points[len - 1]
+
+        return new BDS.Polyline(false, [p1, p2])
 
     computeCumulativeLengths: () ->
 
@@ -398,7 +420,7 @@ class BDS.Polyline
 
         # Now we read off the intersection locations.
         for line in all_lines
-            line.getAllIntersectionPoints(out)
+            line.getPrimaryIntersectionPoints(out)
 
         return out
 

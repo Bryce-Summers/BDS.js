@@ -35,6 +35,9 @@ class BDS.Line
         # The indices of the points.
         @split_points_indices = []
 
+        # Used to retrive unique points without duplicate.
+        @primary_split_indices = []
+
         ### reserved space for attribute data that may be associated to 
         # higher order information about where the intersection occured.
         @_curve = undefined # A curve that this Line was sampled from.
@@ -176,6 +179,15 @@ class BDS.Line
 
         return out
 
+    getPrimaryIntersectionPoints: (out) ->
+        if out == undefined
+            out = []
+
+        for index in @primary_split_indices
+            out.push(@points[index])
+
+        return out
+
     getAllIntersectionTimes: (out) ->
 
         if out == undefined
@@ -302,13 +314,17 @@ class BDS.Line
         # Get the next index that will be used to store the newly created point.
         index = @points.length
         @points.push(intersection_point)
-
         @split_points_indices.push(index)
+        @primary_split_indices.push(index)
 
-        # FIXME: This line needs to be ommited for some examples and given for others.
+        # This does duplicate the points though.
+        # Maybe I could separate these into primary and secondary lists.
+        if other.points != @points
+            index = other.points.length
+            other.points.push(intersection_point)       
+
         other.split_points_indices.push(index)
-
-        # FIXME: I think we need to push the list and index for these guys.
+        return
 
     # Clears away all intersection data.
     clearIntersections: () ->
