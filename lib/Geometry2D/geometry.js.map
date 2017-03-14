@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "geometry.js",
+  "sourceRoot": "..\\..",
+  "sources": [
+    "src\\Geometry2D\\geometry.coffee"
+  ],
+  "names": [],
+  "mappings": ";;AAAA;;;;;;;AAAA;EAOM,GAAG,CAAC;IAEO,kBAAC,MAAD,EAAU,MAAV;MAAC,IAAC,CAAA,SAAD;MAAS,IAAC,CAAA,SAAD;IAAV;;uBAEb,mBAAA,GAAqB,SAAA,GAAA;;uBAIrB,aAAA,GAAe,SAAC,EAAD,GAAA;;uBAGf,iCAAA,GAAmC,SAAC,QAAD;AAE/B,YAAU,IAAA,KAAA,CAAM,qBAAN;IAFqB;;;;;AAlBvC"
+}

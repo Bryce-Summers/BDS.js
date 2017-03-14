@@ -62,7 +62,7 @@ class BDS.SingleLinkedList
     # Removes an element from the beginning of the list.
     dequeue: () -> @pop()
     iterator: () -> new BDS.ListIterator(@_head, @);
-    isEmpty: () -> this.size == 0
+    isEmpty: () -> @_size == 0
     size: () -> @_size
     
     toString: () ->

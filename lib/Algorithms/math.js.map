@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "math.js",
+  "sourceRoot": "..\\..",
+  "sources": [
+    "src\\Algorithms\\math.coffee"
+  ],
+  "names": [],
+  "mappings": ";;AAAA;;;;;;AAAA;EAMA,GAAG,CAAC,IAAJ,GAAW;;EAGX,GAAG,CAAC,IAAI,CAAC,IAAT,GAAgB,SAAC,IAAD,EAAO,EAAP,EAAW,UAAX;AACZ,WAAO,IAAA,GAAK,CAAC,CAAA,GAAI,UAAL,CAAL,GAAwB,EAAA,GAAG;EADtB;AAThB"
+}

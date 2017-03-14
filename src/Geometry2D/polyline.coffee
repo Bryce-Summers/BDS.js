@@ -403,8 +403,10 @@ class BDS.Polyline
 
         return intersector.detect_intersection_line_segments_partitioned(all_lines)
 
-    # Returns a list of all BDS.Point intersection locations.
-    # FIXME: This function probably returns duplicate points right now.
+    # Returns a list of intersection information objects.
+    # {point:point_of_intersection, index:first indice of intersected segment}
+    # second indice will be index + 1.
+    # Returns the indices within this polyline that the intersections occur.
     report_intersections_with_polyline: (polyline) ->
         
         # Convert both polylines to line segments.
@@ -419,8 +421,14 @@ class BDS.Polyline
         out = []
 
         # Now we read off the intersection locations.
-        for line in all_lines
-            line.getPrimaryIntersectionPoints(out)
+        for i in [0...lines1.length]
+            line = lines1[i]
+            pts = line.getAllIntersectionPoints()
+
+            # Transcribe locations to data objects.
+            for pt in pts
+                out_data = {point:pt, index:i}
+                out.push(out_data)
 
         return out
 
