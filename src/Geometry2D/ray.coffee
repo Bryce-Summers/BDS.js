@@ -34,6 +34,13 @@ class BDS.Ray
     getDirection: () ->
         return @dir
 
+    # Returns the right Perpendicular.
+    getRightPerpendicularDirection: () ->
+        return new BDS.Point(-@dir.y, @dir.x, @dir.z)
+
+    getLeftPerpendicularDirection: () ->
+        return new BDS.Point(@dir.y, -@dir.x, @dir.z)
+
     getTimeScale: () ->
         return @_time_scale
 
@@ -53,9 +60,61 @@ class BDS.Ray
         return side1*side2 <= 0 and correct_direction
 
 
-
+    # Returns >0 if c is to the right.
+    # Returns =0 if c is on the ray.
+    # Returns <0 if c is on the left.
     line_side_test: (c) ->
         return (@p2.x - @p1.x)*(c.y - @p1.y) - (@p2.y - @p1.y)*(c.x - @p1.x)
 
     getAngle: () ->
         return Math.atan2(@p2.y - @p1.y, @p2.x - @p1.x)
+
+    # Returns the pt of intersection or null if none exists.
+    intersect_ray: (other) ->
+
+        # Find the intersection point.
+
+        ###
+        u = ((bs.y - as.y) * bd.x - (bs.x - as.x) * bd.y) / (bd.x * ad.y - bd.y * ad.x)
+        v = ((bs.y - as.y) * ad.x - (bs.x - as.x) * ad.y) / (bd.x * ad.y - bd.y * ad.x)
+        Factoring out the common terms, this comes to:
+
+        dx = bs.x - as.x
+        dy = bs.y - as.y
+        det = bd.x * ad.y - bd.y * ad.x
+        u = (dy * bd.x - dx * bd.y) / det
+        v = (dy * ad.x - dx * ad.y) / det
+        ###
+
+        # Extract the relevant points.
+        # s = source, d is direction.
+        as = @p1
+        bs = other.p1
+        ad = @dir
+        bd = other.dir
+
+        # floats.
+        dx = bs.x - as.x
+        dy = bs.y - as.y
+        det = bd.x * ad.y - bd.y * ad.x
+        u = (dy * bd.x - dx * bd.y) / det
+        v = (dy * ad.x - dx * ad.y) / det
+
+        # Elliminate all collisions that are in the negative portion of one of the rays.
+        ###
+        if u < 0 or v < 0
+            return null
+        ###
+
+        #, then the two lines are collinear.
+        if det == 0
+            return null
+
+        intersection_point = as.add(ad.multScalar(u))
+
+        # Sanity Check?
+        if isNaN(intersection_point.x)
+            debugger
+            return null
+
+        return intersection_point

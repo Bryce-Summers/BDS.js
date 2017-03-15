@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 13-03-2017
+ *  Single File concatenated by Grunt Concatenate on 15-03-2017
  */
 /*
  * Defines namespaces.
@@ -661,6 +661,16 @@ Purpose: Provides useful functions, such as Lerping.
     return from * (1 - percentage) + to * percentage;
   };
 
+  BDS.Math.sign = function(c) {
+    if (c < 0) {
+      return -1;
+    }
+    if (c > 0) {
+      return 1;
+    }
+    return 0;
+  };
+
 }).call(this);
 
 //# sourceMappingURL=math.js.map
@@ -1295,6 +1305,18 @@ add, sub, multScalar
       return pt.sub(this).normalize();
     };
 
+    Point.directionFromAngle = function(angle) {
+      return new BDS.Point(Math.cos(angle), Math.sin(angle), 0);
+    };
+
+    Point.prototype.angle = function() {
+      return Math.atan2(this.y, this.x);
+    };
+
+    Point.prototype.angleTo = function(pt) {
+      return pt.sub(this).angle();
+    };
+
     Point.prototype.magnitude = function() {
       return this.norm();
     };
@@ -1831,6 +1853,14 @@ Purpose:
       return this.dir;
     };
 
+    Ray.prototype.getRightPerpendicularDirection = function() {
+      return new BDS.Point(-this.dir.y, this.dir.x, this.dir.z);
+    };
+
+    Ray.prototype.getLeftPerpendicularDirection = function() {
+      return new BDS.Point(this.dir.y, -this.dir.x, this.dir.z);
+    };
+
     Ray.prototype.getTimeScale = function() {
       return this._time_scale;
     };
@@ -1850,6 +1880,45 @@ Purpose:
 
     Ray.prototype.getAngle = function() {
       return Math.atan2(this.p2.y - this.p1.y, this.p2.x - this.p1.x);
+    };
+
+    Ray.prototype.intersect_ray = function(other) {
+
+      /*
+      u = ((bs.y - as.y) * bd.x - (bs.x - as.x) * bd.y) / (bd.x * ad.y - bd.y * ad.x)
+      v = ((bs.y - as.y) * ad.x - (bs.x - as.x) * ad.y) / (bd.x * ad.y - bd.y * ad.x)
+      Factoring out the common terms, this comes to:
+      
+      dx = bs.x - as.x
+      dy = bs.y - as.y
+      det = bd.x * ad.y - bd.y * ad.x
+      u = (dy * bd.x - dx * bd.y) / det
+      v = (dy * ad.x - dx * ad.y) / det
+       */
+      var ad, as, bd, bs, det, dx, dy, intersection_point, u, v;
+      as = this.p1;
+      bs = other.p1;
+      ad = this.dir;
+      bd = other.dir;
+      dx = bs.x - as.x;
+      dy = bs.y - as.y;
+      det = bd.x * ad.y - bd.y * ad.x;
+      u = (dy * bd.x - dx * bd.y) / det;
+      v = (dy * ad.x - dx * ad.y) / det;
+
+      /*
+      if u < 0 or v < 0
+          return null
+       */
+      if (det === 0) {
+        return null;
+      }
+      intersection_point = as.add(ad.multScalar(u));
+      if (isNaN(intersection_point.x)) {
+        debugger;
+        return null;
+      }
+      return intersection_point;
     };
 
     return Ray;

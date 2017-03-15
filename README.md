@@ -19,7 +19,7 @@ npm install
    On Linux it is not too difficult. On a map, try dragging the file into the terminal or something of that nature.
 
 3. Automatically compile the coffeescript code to javascript in one terminal:
- coffee -o lib/ -cw src/
+ coffee --map -o lib/ -cw src/
 
 compile once with coffee -o lib/ -c src/
 -o is out, -c is compile, -w is watch.

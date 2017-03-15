@@ -63,6 +63,16 @@ class BDS.Point
     directionTo: (pt) ->
         return pt.sub(@).normalize()
 
+    # Converts radians to a unit direction vector.
+    @directionFromAngle: (angle) ->
+        return new BDS.Point(Math.cos(angle), Math.sin(angle), 0)
+
+    angle: () ->
+        return Math.atan2(@y, @x)
+
+    angleTo: (pt) ->
+        return pt.sub(@).angle()
+
     magnitude: () ->
         return @norm()
 
