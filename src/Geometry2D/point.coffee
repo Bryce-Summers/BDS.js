@@ -12,6 +12,12 @@ class BDS.Point
 
     constructor : (@x, @y, @z) ->
 
+        if @x == undefined or isNaN(@x)
+            debugger
+
+        if @y == undefined or isNaN(@y)
+            debugger
+
         if !@z
             @z = 0.0
 
@@ -72,6 +78,14 @@ class BDS.Point
 
     angleTo: (pt) ->
         return pt.sub(@).angle()
+
+    # Treats this and the given pt as direction vectors.
+    angleBetween: (pt) ->
+        dot = @dot(pt)
+
+        cosA = dot /(@norm() * pt.norm())
+
+        return Math.acos(cosA)
 
     magnitude: () ->
         return @norm()

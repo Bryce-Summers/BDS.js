@@ -8,6 +8,7 @@
 #          objects and point scene intersection queries.
 #          If may also be used to rapidly detect non-collisions.
 #
+# FIXME: Write some methods for balancing the tree.
 
 class BDS.BVH2D
 

@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 15-03-2017
+ *  Single File concatenated by Grunt Concatenate on 16-03-2017
  */
 /*
  * Defines namespaces.
@@ -1242,6 +1242,12 @@ add, sub, multScalar
       this.x = x1;
       this.y = y1;
       this.z = z1;
+      if (this.x === void 0 || isNaN(this.x)) {
+        debugger;
+      }
+      if (this.y === void 0 || isNaN(this.y)) {
+        debugger;
+      }
       if (!this.z) {
         this.z = 0.0;
       }
@@ -1315,6 +1321,13 @@ add, sub, multScalar
 
     Point.prototype.angleTo = function(pt) {
       return pt.sub(this).angle();
+    };
+
+    Point.prototype.angleBetween = function(pt) {
+      var cosA, dot;
+      dot = this.dot(pt);
+      cosA = dot / (this.norm() * pt.norm());
+      return Math.acos(cosA);
     };
 
     Point.prototype.magnitude = function() {
@@ -1854,15 +1867,19 @@ Purpose:
     };
 
     Ray.prototype.getRightPerpendicularDirection = function() {
-      return new BDS.Point(-this.dir.y, this.dir.x, this.dir.z);
+      return new BDS.Point(-this.dir.y, this.dir.x);
     };
 
     Ray.prototype.getLeftPerpendicularDirection = function() {
-      return new BDS.Point(this.dir.y, -this.dir.x, this.dir.z);
+      return new BDS.Point(this.dir.y, -this.dir.x);
     };
 
     Ray.prototype.getTimeScale = function() {
       return this._time_scale;
+    };
+
+    Ray.prototype.getPointAtTime = function(t) {
+      return this.p1.add(this.dir.multScalar(t * this._time_scale));
     };
 
     Ray.prototype.detect_intersection_with_line = function(line) {
@@ -1919,6 +1936,21 @@ Purpose:
         return null;
       }
       return intersection_point;
+    };
+
+    Ray.prototype.getPerpAndParLengths = function(pt) {
+      var displacement, parrallel_component, perp_component;
+      displacement = pt.sub(this.p1);
+      parrallel_component = displacement.dot(this.dir);
+      perp_component = displacement.dot(this.getRightPerpendicularDirection());
+      return [Math.abs(perp_component), parrallel_component / this._time_scale];
+    };
+
+    Ray.prototype.projectPoint = function(pt) {
+      var displacement, parrallel_component;
+      displacement = pt.sub(this.p1);
+      parrallel_component = displacement.dot(this.dir);
+      return this.p1.add(this.dir.multScalar(parrallel_component));
     };
 
     return Ray;

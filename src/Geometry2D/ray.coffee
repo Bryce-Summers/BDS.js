@@ -35,14 +35,19 @@ class BDS.Ray
         return @dir
 
     # Returns the right Perpendicular.
+    # Normalized.
     getRightPerpendicularDirection: () ->
-        return new BDS.Point(-@dir.y, @dir.x, @dir.z)
+        return new BDS.Point(-@dir.y, @dir.x)
 
+    # Normalized.
     getLeftPerpendicularDirection: () ->
-        return new BDS.Point(@dir.y, -@dir.x, @dir.z)
+        return new BDS.Point(@dir.y, -@dir.x)
 
     getTimeScale: () ->
         return @_time_scale
+
+    getPointAtTime: (t) ->
+        return @p1.add(@dir.multScalar(t*@_time_scale))
 
     # BDS.Line -> bool
     detect_intersection_with_line: (line) ->
@@ -118,3 +123,21 @@ class BDS.Ray
             return null
 
         return intersection_point
+
+    # Takes the given point an returns [perpendicular distance of pt from ray, signed distance of the proejction along the ray in [0, 1] space.]
+    getPerpAndParLengths: (pt) ->
+
+        displacement = pt.sub(@p1)
+        # Note: @dir is assumed to be normalized.
+        parrallel_component = displacement.dot(@dir)
+
+        perp_component = displacement.dot(@getRightPerpendicularDirection())
+
+        return [Math.abs(perp_component), parrallel_component / @_time_scale]
+
+    projectPoint: (pt) ->
+
+        displacement = pt.sub(@p1)
+        parrallel_component = displacement.dot(@dir)
+
+        return @p1.add(@dir.multScalar(parrallel_component))
