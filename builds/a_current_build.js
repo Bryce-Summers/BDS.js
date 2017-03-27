@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 16-03-2017
+ *  Single File concatenated by Grunt Concatenate on 26-03-2017
  */
 /*
  * Defines namespaces.
@@ -1433,6 +1433,10 @@ FIXME: Return proper point in polyline tests for complemented filled polylines.
       @_times # List of parameter values that associated point for point.
        */
     }
+
+    Polyline.prototype.clone = function() {
+      return new BDS.Polyline(this._isClosed, this._points, this._isFilled);
+    };
 
     Polyline.prototype.appendPoints = function(array) {
       var j, len1, p;

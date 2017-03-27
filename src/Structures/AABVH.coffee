@@ -224,6 +224,7 @@ class BDS.BVH2D
     # returns null otherwise.
     # It is advisable that any meshes used for queries be used with ways of getting
     # to the classes that you are interested in, such as a @model attribute.
+    # BDS.Point -> BDS.Polyline
     query_point: (pt) ->
 
         # Check leaf nodes, narrow-phase collision detection.
