@@ -39,6 +39,11 @@ class BDS.Polyline
         @_times # List of parameter values that associated point for point.
         ###
 
+    ###
+    setFilled: (isFilled) ->
+        @_isFilled = isFilled
+    ###
+
     clone: () ->
         return new BDS.Polyline(@_isClosed, @_points, @_isFilled)
 
@@ -356,16 +361,11 @@ class BDS.Polyline
         # originating at that point crosses the boundary an even number of times.
         odd = false
 
-        #count = 0
-
         segments = @_toLineSegments()
         for segment in segments
 
             if ray.detect_intersection_with_line(segment)
                 odd = not odd
-                #count++
-
-        console.log(count)
 
         return odd
 
