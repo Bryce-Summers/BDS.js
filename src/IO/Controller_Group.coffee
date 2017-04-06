@@ -62,6 +62,7 @@ class BDS.Controller_Group
         for i in [0...len] by 1 #(var i = 0; i < len; i++)
             controller = @_mouse_input_controllers[i]
             controller.mouse_down(event) if controller.isActive()
+        return
 
     mouse_up: (event) ->
 
@@ -69,6 +70,7 @@ class BDS.Controller_Group
         for i in [0...len] by 1 # (var i = 0; i < len; i++)
             controller = @_mouse_input_controllers[i]
             controller.mouse_up(event) if controller.isActive()
+        return
 
     mouse_move: (event) ->
 
@@ -77,6 +79,7 @@ class BDS.Controller_Group
         
             controller = @_mouse_input_controllers[i]
             controller.mouse_move(event) if controller.isActive()
+        return
 
     # Difference in time between the previous call and this call.
     time: (dt) ->
@@ -86,6 +89,8 @@ class BDS.Controller_Group
             controller = @_time_input_controllers[i]
             controller.time(dt) if controller.isActive()
 
+        return
+
     window_resize: (event) ->
 
         len = @_system_controllers.length
@@ -93,3 +98,5 @@ class BDS.Controller_Group
         
             controller = @_system_controllers[i]
             controller.window_resize() if controller.isActive()
+
+        return
