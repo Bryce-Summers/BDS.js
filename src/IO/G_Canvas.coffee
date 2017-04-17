@@ -165,15 +165,19 @@ class BDS.G_Canvas
         @ctx.stroke()
 
     drawScreenBounds: () ->
+
+        polyline = @getScreenBoundsPolyline()
+        @fillColor(0xffffff)
+        @drawPolyline(polyline)
+
+    getScreenBoundsPolyline: () ->
         pts = []
         pts.push(new BDS.Point(1,  1))
         pts.push(new BDS.Point(@w, 1))
         pts.push(new BDS.Point(@w, @h))
         pts.push(new BDS.Point(1,  @h))
         polyline = new BDS.Polyline(true, pts, false)
-
-        @fillColor(0xffffff)
-        @drawPolyline(polyline)
+        return polyline
 
     # Draws a SCRIB.Polyline.
     drawPolyline: (polyline) ->

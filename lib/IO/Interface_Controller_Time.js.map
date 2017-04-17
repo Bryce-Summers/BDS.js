@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "Interface_Controller_Time.js",
+  "sourceRoot": "..\\..",
+  "sources": [
+    "src\\IO\\Interface_Controller_Time.coffee"
+  ],
+  "names": [],
+  "mappings": ";;AAAA;;;;;;;AAAA;EAQM,GAAG,CAAC;IAEO,mCAAA;MACT,IAAC,CAAA,OAAD,GAAW;IADF;;wCAGb,SAAA,GAAW,SAAC,QAAD;aAAc,IAAC,CAAA,OAAD,GAAW;IAAzB;;wCACX,QAAA,GAAU,SAAA;aAAM,IAAC,CAAA;IAAP;;wCAEV,IAAA,GAAM,SAAC,EAAD,GAAA;;;;;AAhBV"
+}
