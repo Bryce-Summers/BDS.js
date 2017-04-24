@@ -51,6 +51,16 @@ class BDS.Controller_UI
         polyline.setAssociatedData(element)
         @_bvh.add(polyline)
         @_elements.add(element)
+
+        return element
+
+    # Remove the given button from the elements and bvh structures.
+    removeButton: (b) ->
+        a = @_elements.delete(b)
+        b = @_bvh.remove(b.polyline)
+
+        # Return true if the button was removed from all data structures.
+        return a and b
     
 
     # Converts the current hover element to a clicked element.

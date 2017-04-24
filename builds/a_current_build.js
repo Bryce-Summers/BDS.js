@@ -2103,7 +2103,15 @@ Factored on 4.4.17 by Bryce Summers.
       };
       polyline.setAssociatedData(element);
       this._bvh.add(polyline);
-      return this._elements.add(element);
+      this._elements.add(element);
+      return element;
+    };
+
+    Controller_UI.prototype.removeButton = function(b) {
+      var a;
+      a = this._elements["delete"](b);
+      b = this._bvh.remove(b.polyline);
+      return a && b;
     };
 
     Controller_UI.prototype.mouse_down = function(event) {
