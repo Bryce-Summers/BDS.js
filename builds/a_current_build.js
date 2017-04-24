@@ -2330,6 +2330,13 @@ Factored on 4.4.17 by Bryce Summers.
     };
 
     G_Canvas.prototype.drawScreenBounds = function() {
+      var polyline;
+      polyline = this.getScreenBoundsPolyline();
+      this.fillColor(0xffffff);
+      return this.drawPolyline(polyline);
+    };
+
+    G_Canvas.prototype.getScreenBoundsPolyline = function() {
       var polyline, pts;
       pts = [];
       pts.push(new BDS.Point(1, 1));
@@ -2337,8 +2344,7 @@ Factored on 4.4.17 by Bryce Summers.
       pts.push(new BDS.Point(this.w, this.h));
       pts.push(new BDS.Point(1, this.h));
       polyline = new BDS.Polyline(true, pts, false);
-      this.fillColor(0xffffff);
-      return this.drawPolyline(polyline);
+      return polyline;
     };
 
     G_Canvas.prototype.drawPolyline = function(polyline) {
