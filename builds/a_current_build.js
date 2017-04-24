@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 06-04-2017
+ *  Single File concatenated by Grunt Concatenate on 24-04-2017
  */
 /*
  * Defines namespaces.
@@ -2164,7 +2164,7 @@ Factored on 4.4.17 by Bryce Summers.
           var fill, img, polyline, pt;
           polyline = element.polyline;
           fill = element.color;
-          pt = polyline.getFirstPoint();
+          pt = polyline.getBoundingBox().min;
           img = element.image;
           self._G.drawImage(img, pt.x, pt.y);
           self._G.setAlpha(.2);
@@ -2207,8 +2207,8 @@ Factored on 4.4.17 by Bryce Summers.
       this._canvas = _canvas;
       this.ctx = this._canvas.getContext("2d");
       this.ctx.strokeStyle = '#ffffff';
-      this.w = 500;
-      this.h = 500;
+      this.w = this._canvas.width;
+      this.h = this._canvas.height;
       this._background_color = 0xaaaaaa;
     }
 

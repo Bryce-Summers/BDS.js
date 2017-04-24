@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "Interface_G.js",
+  "sourceRoot": "..\\..",
+  "sources": [
+    "src\\IO\\Interface_G.coffee"
+  ],
+  "names": [],
+  "mappings": ";;AAAA;;;;;;;;;;;;AAAA;EAaM,GAAG,CAAC;IAEO,qBAAA,GAAA;;;;;AAfjB"
+}

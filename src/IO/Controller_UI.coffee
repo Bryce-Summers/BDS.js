@@ -136,7 +136,7 @@ class BDS.Controller_UI
             fill     = element.color
 
             # Top left corner.
-            pt  = polyline.getFirstPoint()
+            pt  = polyline.getBoundingBox().min# Clone this?
 
             # Icon.
             img = element.image
