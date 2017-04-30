@@ -198,7 +198,43 @@ class BDS.Line
 
         return out
 
-    
+    # Used when the index is important.
+    getAllIntersectionIndices: (out) ->
+        if out == undefined
+            out = []
+
+        for index in @split_points_indices
+            out.push(index)
+
+        return out
+
+    # Returns all indices, including the starting point indice,
+    # all of the intersection indices in order,
+    # then the ending point indice.
+    getAllIndiciesOrdered: (out) ->
+
+        if out == undefined
+            out = []
+
+        # First sort points.
+        @_sort_split_points()
+
+        out.push(@p1_index)
+        for index in @split_points_indices
+            out.push(index)
+        out.push(@p2_index)
+
+        return out
+
+    getPrimaryIntersectionIndices: (out) ->
+        if out == undefined
+            out = []
+
+        for index in @primary_split_indices
+            out.push(index)
+
+        return out
+
     ###
     Internally sorts the split points from the start to the end of this line.
     ###
@@ -207,11 +243,15 @@ class BDS.Line
         len = @split_points_per.length
 
         # Insertion sort.
-        for i in [1...len]#(int i = 1; i < len; i++)
-            for i2 in [i - 1 ..0]#for (int i2 = i - 1; i2 >= 0; i2--)
+        for i in [1...len] by 1#(int i = 1; i < len; i++)
+            i2 = i - 1
+            while i2 >= 0
+            #for (int i2 = i - 1; i2 >= 0; i2--)
             
                 i1 = i2 + 1;
 
+                # Early out if the point at i1 is larger than i2,
+                # because i2 is guranteed to the largest of the sorted section.
                 if @split_points_per[i2] <= @split_points_per[i1]
                    break
 
@@ -224,6 +264,8 @@ class BDS.Line
                 temp_i = @split_points_indices[i2]
                 @split_points_indices[i2] = @split_points_indices[i1]
                 @split_points_indices[i1] = temp_i
+
+                i2--
 
         return
 

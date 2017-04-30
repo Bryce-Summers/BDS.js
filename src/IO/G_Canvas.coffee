@@ -17,8 +17,8 @@ class BDS.G_Canvas
         @ctx.strokeStyle = '#ffffff'
 
         # FIXME: Get the actual dimensions of the canvas.
-        @w = 500
-        @h = 500
+        @w = @_canvas.width
+        @h = @_canvas.height
 
         # Black color.
         @_background_color = 0xaaaaaa

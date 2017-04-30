@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 17-04-2017
+ *  Single File concatenated by Grunt Concatenate on 29-04-2017
  */
 /*
  * Defines namespaces.
@@ -514,16 +514,59 @@ Please use Polylines for the geometric representation and drawing of lines.
       return out;
     };
 
+    Line.prototype.getAllIntersectionIndices = function(out) {
+      var index, j, len1, ref;
+      if (out === void 0) {
+        out = [];
+      }
+      ref = this.split_points_indices;
+      for (j = 0, len1 = ref.length; j < len1; j++) {
+        index = ref[j];
+        out.push(index);
+      }
+      return out;
+    };
+
+    Line.prototype.getAllIndiciesOrdered = function(out) {
+      var index, j, len1, ref;
+      if (out === void 0) {
+        out = [];
+      }
+      this._sort_split_points();
+      out.push(this.p1_index);
+      ref = this.split_points_indices;
+      for (j = 0, len1 = ref.length; j < len1; j++) {
+        index = ref[j];
+        out.push(index);
+      }
+      out.push(this.p2_index);
+      return out;
+    };
+
+    Line.prototype.getPrimaryIntersectionIndices = function(out) {
+      var index, j, len1, ref;
+      if (out === void 0) {
+        out = [];
+      }
+      ref = this.primary_split_indices;
+      for (j = 0, len1 = ref.length; j < len1; j++) {
+        index = ref[j];
+        out.push(index);
+      }
+      return out;
+    };
+
 
     /*
     Internally sorts the split points from the start to the end of this line.
      */
 
     Line.prototype._sort_split_points = function() {
-      var i, i1, i2, j, k, len, ref, ref1, temp_f, temp_i;
+      var i, i1, i2, j, len, ref, temp_f, temp_i;
       len = this.split_points_per.length;
-      for (i = j = 1, ref = len; 1 <= ref ? j < ref : j > ref; i = 1 <= ref ? ++j : --j) {
-        for (i2 = k = ref1 = i - 1; ref1 <= 0 ? k <= 0 : k >= 0; i2 = ref1 <= 0 ? ++k : --k) {
+      for (i = j = 1, ref = len; j < ref; i = j += 1) {
+        i2 = i - 1;
+        while (i2 >= 0) {
           i1 = i2 + 1;
           if (this.split_points_per[i2] <= this.split_points_per[i1]) {
             break;
@@ -534,6 +577,7 @@ Please use Polylines for the geometric representation and drawing of lines.
           temp_i = this.split_points_indices[i2];
           this.split_points_indices[i2] = this.split_points_indices[i1];
           this.split_points_indices[i1] = temp_i;
+          i2--;
         }
       }
     };
@@ -2237,8 +2281,8 @@ Factored on 4.4.17 by Bryce Summers.
       this._canvas = _canvas;
       this.ctx = this._canvas.getContext("2d");
       this.ctx.strokeStyle = '#ffffff';
-      this.w = 500;
-      this.h = 500;
+      this.w = this._canvas.width;
+      this.h = this._canvas.height;
       this._background_color = 0xaaaaaa;
     }
 
