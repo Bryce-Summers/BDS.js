@@ -17,8 +17,8 @@ class BDS.G_Canvas
         @ctx.strokeStyle = '#ffffff'
 
         # FIXME: Get the actual dimensions of the canvas.
-        @w = 500
-        @h = 500
+        @w = @_canvas.width
+        @h = @_canvas.height
 
         # Black color.
         @_background_color = 0xaaaaaa
@@ -165,15 +165,19 @@ class BDS.G_Canvas
         @ctx.stroke()
 
     drawScreenBounds: () ->
+
+        polyline = @getScreenBoundsPolyline()
+        @fillColor(0xffffff)
+        @drawPolyline(polyline)
+
+    getScreenBoundsPolyline: () ->
         pts = []
         pts.push(new BDS.Point(1,  1))
         pts.push(new BDS.Point(@w, 1))
         pts.push(new BDS.Point(@w, @h))
         pts.push(new BDS.Point(1,  @h))
         polyline = new BDS.Polyline(true, pts, false)
-
-        @fillColor(0xffffff)
-        @drawPolyline(polyline)
+        return polyline
 
     # Draws a SCRIB.Polyline.
     drawPolyline: (polyline) ->
