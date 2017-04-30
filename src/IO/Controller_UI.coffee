@@ -45,6 +45,8 @@ class BDS.Controller_UI
          * {click:    () -> what happens when the user clicks on this element,
          *  fill:     The current fill color used to indicate the state of the button. 
          *  polyline: The polyline that represents the spatial extent for this UI element.
+         *  image:    The image that will be drawn as an icon to represent the UI element.
+         *            If image is null, then no image will be drawn.
         ###
 
         element = {click: click_function, color: @_c_resting, polyline:polyline, image: img}
@@ -129,6 +131,9 @@ class BDS.Controller_UI
 
         # ASSUMPTION: No elements are overlapping...
         #for (let element of @elements)
+
+        # Don't draw anything if graphics representation is handled elsewhere.
+
         self = @
         @_elements.forEach (element) =>
         
@@ -140,7 +145,7 @@ class BDS.Controller_UI
 
             # Icon.
             img = element.image
-            self._G.drawImage(img, pt.x, pt.y)
+            self._G.drawImage(img, pt.x, pt.y) if img
 
             # Interior.
             self._G.setAlpha(.2)
