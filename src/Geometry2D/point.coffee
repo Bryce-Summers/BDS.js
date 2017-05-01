@@ -24,6 +24,11 @@ class BDS.Point
     clone: () ->
         return new BDS.Point(@x, @y, @z)
 
+    copyFrom: (pt) ->
+        @x = pt.x
+        @y = pt.y
+        @z = pt.z
+
     add: (pt) ->
         out = @clone()
         out.x += pt.x
