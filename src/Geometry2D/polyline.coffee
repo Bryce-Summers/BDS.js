@@ -476,3 +476,23 @@ class BDS.Polyline
 
         return [left_out, right_out]
 
+    @newCircle: (x, y, radius) ->
+        pts = []
+        for i in [0...Math.PI*2] by Math.PI/100
+        
+            cx     = x
+            cy     = y
+
+            pts.push(new BDS.Point(cx + radius*Math.cos(i), cy + radius*Math.sin(i)))
+
+        return new BDS.Polyline(true, pts, true)
+
+    # {x:, y:, w:, h:}
+    @newRectangle: (dim) ->
+        pts = []
+        pts.push(new BDS.Point(dim.x, dim.y))
+        pts.push(new BDS.Point(dim.x + dim.w, dim.y))
+        pts.push(new BDS.Point(dim.x + dim.w, dim.y + dim.h))
+        pts.push(new BDS.Point(dim.x,         dim.y + dim.h))
+
+        return new BDS.Polyline(true, pts, true)
