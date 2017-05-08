@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 04-05-2017
+ *  Single File concatenated by Grunt Concatenate on 08-05-2017
  */
 /*
  * Defines namespaces.
@@ -2304,6 +2304,10 @@ Factored on 4.4.17 by Bryce Summers.
       return this.ctx.restore();
     };
 
+    G_Canvas.prototype.backgroundColor = function(color) {
+      return this._background_color = color;
+    };
+
     G_Canvas.prototype.strokeColor = function(color) {
       var str;
       str = color.toString(16);
@@ -2416,7 +2420,11 @@ Factored on 4.4.17 by Bryce Summers.
       var polyline;
       polyline = this.getScreenBoundsPolyline();
       this.fillColor(0xffffff);
-      return this.drawPolyline(polyline);
+      this.drawPolyline(polyline);
+    };
+
+    G_Canvas.prototype.fillScreen = function() {
+      this.ctx.fillRect(0, 0, this.w, this.h);
     };
 
     G_Canvas.prototype.getScreenBoundsPolyline = function() {
@@ -2545,16 +2553,31 @@ Factored on 4.4.17 by Bryce Summers.
       if (circle.isFilled()) {
         this.ctx.fill();
       }
-      return this.ctx.stroke();
+      this.ctx.stroke();
+    };
+
+    G_Canvas.prototype.centerAlignFont = function() {
+      this.ctx.textAlign = "center";
+    };
+
+    G_Canvas.prototype.leftAlignFont = function() {
+      this.ctx.textAlign = "left";
+    };
+
+    G_Canvas.prototype.rightAlignFont = function() {
+      this.ctx.textAlign = "right";
+    };
+
+    G_Canvas.prototype.setFont = function(font_name, size) {
+      this.ctx.font = size + "pt " + font_name;
     };
 
     G_Canvas.prototype.drawText = function(str, x, y) {
-      this.ctx = this.ctx;
-      return this.ctx.fillText(str, x, y);
+      this.ctx.fillText(str, x, y);
     };
 
     G_Canvas.prototype.drawImage = function(img, x, y) {
-      return this.ctx.drawImage(img, x, y);
+      this.ctx.drawImage(img, x, y);
     };
 
     return G_Canvas;

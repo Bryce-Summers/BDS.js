@@ -23,6 +23,8 @@ class BDS.G_Canvas
         # Black color.
         @_background_color = 0xaaaaaa
 
+    # Clears the screen to the background color.
+    # Reverts all styles to default.
     clearScreen: () ->
     
         @ctx = @ctx
@@ -38,6 +40,8 @@ class BDS.G_Canvas
         # Restore the transform
         @ctx.restore()
     
+    backgroundColor: (color) ->
+        @_background_color = color
 
     # #rrggbb (number)
     strokeColor: (color) ->
@@ -169,6 +173,12 @@ class BDS.G_Canvas
         polyline = @getScreenBoundsPolyline()
         @fillColor(0xffffff)
         @drawPolyline(polyline)
+        return
+
+    # FIXME: Use a standard rectangle.
+    fillScreen: () ->
+        @ctx.fillRect(0, 0, @w, @h)
+        return
 
     getScreenBoundsPolyline: () ->
         pts = []
@@ -317,11 +327,30 @@ class BDS.G_Canvas
             @ctx.fill()
 
         @ctx.stroke()
+        return
+
+    centerAlignFont: () ->
+        @ctx.textAlign="center"
+        return
+
+
+    leftAlignFont: () ->
+        @ctx.textAlign="left"
+        return
+
+    rightAlignFont: () ->
+        @ctx.textAlign="right"
+        return
+
+    # String -> font gets set, Int
+    setFont: (font_name, size) ->
+        @ctx.font= size + "pt " + font_name
+        return
 
     drawText: (str, x, y) ->
-    
-        @ctx = @ctx
         @ctx.fillText(str, x, y)
+        return
 
     drawImage: (img, x, y) ->
         @ctx.drawImage(img, x, y)
+        return
