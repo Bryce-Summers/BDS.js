@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 08-05-2017
+ *  Single File concatenated by Grunt Concatenate on 18-06-2017
  */
 /*
  * Defines namespaces.
@@ -2104,6 +2104,47 @@ Factored on 4.4.17 by Bryce Summers.
       }
     };
 
+    Controller_Group.prototype.key_down = function(event) {
+      var controller, i, j, len, ref;
+      len = this._keyboard_input_controllers.length;
+      for (i = j = 0, ref = len; j < ref; i = j += 1) {
+        controller = this._keyboard_input_controllers[i];
+        if (controller.isActive()) {
+          controller.key_down(event);
+        }
+      }
+    };
+
+    Controller_Group.prototype.key_up = function(event) {
+      var controller, i, j, len, ref, results;
+      len = this._keyboard_input_controllers.length;
+      results = [];
+      for (i = j = 0, ref = len; j < ref; i = j += 1) {
+        controller = this._keyboard_input_controllers[i];
+        if (controller.isActive()) {
+          results.push(controller.key_up(event));
+        } else {
+          results.push(void 0);
+        }
+      }
+      return results;
+    };
+
+    Controller_Group.prototype.key_pressed = function(event) {
+      var controller, i, j, len, ref, results;
+      len = this._keyboard_input_controllers.length;
+      results = [];
+      for (i = j = 0, ref = len; j < ref; i = j += 1) {
+        controller = this._keyboard_input_controllers[i];
+        if (controller.isActive()) {
+          results.push(controller.key_pressed(event));
+        } else {
+          results.push(void 0);
+        }
+      }
+      return results;
+    };
+
     Controller_Group.prototype.time = function(dt) {
       var controller, i, j, len, ref;
       len = this._time_input_controllers.length;
@@ -2614,6 +2655,10 @@ Purpose: Interface for all user input controllers.
     Interface_Controller_All.prototype.mouse_up = function(event) {};
 
     Interface_Controller_All.prototype.mouse_move = function(event) {};
+
+    Interface_Controller_All.prototype.key_down = function(event) {};
+
+    Interface_Controller_All.prototype.key_up = function(event) {};
 
     Interface_Controller_All.prototype.time = function(dt) {};
 

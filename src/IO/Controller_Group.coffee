@@ -10,7 +10,7 @@ Factored on 4.4.17 by Bryce Summers.
 
 ###
 
-class BDS.Controller_Group
+class BDS.Controller_Group #extends BDS.Interface_Controller_All
 
     constructor: () ->
 
@@ -80,6 +80,28 @@ class BDS.Controller_Group
             controller = @_mouse_input_controllers[i]
             controller.mouse_move(event) if controller.isActive()
         return
+
+
+    key_down:(event) ->
+        len = @_keyboard_input_controllers.length
+        for i in [0...len] by 1 # (var i = 0; i < len; i++)
+            controller = @_keyboard_input_controllers[i]
+            controller.key_down(event) if controller.isActive()
+        return
+
+    key_up: (event)  ->
+        len = @_keyboard_input_controllers.length
+        for i in [0...len] by 1 # (var i = 0; i < len; i++)
+            controller = @_keyboard_input_controllers[i]
+            controller.key_up(event) if controller.isActive()
+
+    key_pressed: (event) ->
+        len = @_keyboard_input_controllers.length
+        for i in [0...len] by 1 # (var i = 0; i < len; i++)
+            controller = @_keyboard_input_controllers[i]
+            controller.key_pressed(event) if controller.isActive()
+
+
 
     # Difference in time between the previous call and this call.
     time: (dt) ->
