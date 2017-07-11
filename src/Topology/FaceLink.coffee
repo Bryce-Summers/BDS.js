@@ -18,31 +18,44 @@ Purpose: Low memory data structure for storing the linkages between the triangle
 
 ###
 
+# Auxiliary class used to store extra associated data for use
+# in algorithms and stuff.
+class BDS.FaceLinkData
+    constructor: (faceLink) ->
+        @faceLink = faceLink
+
+        ###
+        Other data fields may be allocated here externally.
+        Some common fields include:
+         - triangle, a geometric structure corresponding to the indices.
+        ###
+
 class BDS.FaceLink
 
-    constructor: (face) ->
+    constructor: () ->
 
-        @face = face # Arbitrary triangle face type.
+        @data = new BDS.FaceLinkData(@)
 
         # Face opposite triangle's 1st index, second, third indices.
 
+        # FaceLinks.
         @a = null
         @b = null
         @c = null
 
 class BDS.FaceLinkGraph
 
-    constructor: () ->
+    constructor: (indices) ->
         @_faceLinks = null
+        @_build_from_indices(indices)
 
     # REQURIES indices is a list of indices, where every 3 coorespond to the indices of points in some external array.
-    # the triangle objects are given in the same order as the indices.
     # The input indices are assumed to be well-oriented.
     #
     # ENSURES: Returns an array of FaceLinks in the same order as the inputs.
     #          The face links will be linked when they share common edges containing identical vertices.
-    # int[], Face[] (Arbitrary type, pased to facelink.)
-    build_from_indices_and_triangles: (indices, faces) ->
+    # int[]
+    _build_from_indices: (indices) ->
 
         map = new Map()
 
@@ -56,10 +69,8 @@ class BDS.FaceLinkGraph
             b = indices[index + 1]
             c = indices[index + 2]
 
-            face = faces[i]
-
             # Allocate this face and store it.
-            facelink = new BDS.FaceLink(face)
+            facelink = new BDS.FaceLink()
             @_faceLinks.push(facelink)
 
             # For all 3 sides, bidirectionally link this to those that have put an edge into the map,
@@ -93,6 +104,30 @@ class BDS.FaceLinkGraph
                 edge_c = [b, a]
                 map.set(edge_c, facelink)
 
+    size: () ->
+        return @_faceLinks.length
+
     # Get the Facelink at the given index.
     get: (index) ->
         return @_faceLinks[index]
+
+    # applies the given function to every 
+    # (faceLinkData) -> ()
+    
+    eval_data: (func) ->
+        for faceLink in @_faceLinks
+            func(faceLink.data)
+
+        return
+
+    # evaluates the given function for faceLinks and 
+    # associated input values.
+    # (faceLinkData, input) -> ()
+    map_data: (func, inputs) ->
+        len = @size()
+        for i in [0...len]
+            faceLink = @_faceLinks[i]
+            input    = inputs[i]
+            func(faceLink.data, input)
+
+        return
