@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 11-07-2017
+ *  Single File concatenated by Grunt Concatenate on 17-07-2017
  */
 /*
  * Defines namespaces.
@@ -64,7 +64,7 @@ Requires the use of data nodes n that have three fields availible:
       this._node_set.add(goal);
       start.dist_to_start = 0;
       start.dist_to_goal = this._search_graph.heuristic(start, goal);
-      end.dist_to_goal = 0;
+      goal.dist_to_goal = 0;
       frontier = new BDS.Heap([start], function(a, b) {
         return a.dist_to_start + a.dist_to_goal <= b.dist_to_start + b.dist_to_goal;
       });
@@ -72,14 +72,12 @@ Requires the use of data nodes n that have three fields availible:
         node = frontier.dequeue();
         if (node === goal) {
           node_path = this._tracePathBack(node);
-          this._clearVoxelSearchData();
+          this._clearNodeSearchData();
           pts = [];
-          pts.push(start_position.clone());
           for (i = 0, len = node_path.length; i < len; i++) {
             node = node_path[i];
-            pts.push(end_position.clone());
+            pts.push(node.position.clone());
           }
-          pts.push(new THREE.Vector3(xyz2.x, xyz2.y, xyz2.z));
           return pts;
         }
         neighbors = this._search_graph.neighbors(node);
@@ -102,7 +100,7 @@ Requires the use of data nodes n that have three fields availible:
       console.log(" and ")
       console.log(goal)
        */
-      this._clearVoxelSearchData();
+      this._clearNodeSearchData();
       return [];
     };
 
@@ -3797,11 +3795,11 @@ Purpose: Low memory data structure for storing the linkages between the triangle
     }
 
     FaceLinkGraph.prototype._build_from_indices = function(indices) {
-      var a, b, c, edge_a, edge_b, edge_c, facelink, i, index, j, len, link_a, link_b, link_c, map, ref, results;
+      debugger;
+      var a, b, c, edge_a, edge_b, edge_c, facelink, i, index, j, len, link_a, link_b, link_c, map, ref;
       map = new Map();
       this._faceLinks = [];
-      len = triangles.length;
-      results = [];
+      len = Math.floor(indices.length / 3);
       for (i = j = 0, ref = len; 0 <= ref ? j < ref : j > ref; i = 0 <= ref ? ++j : --j) {
         index = i * 3;
         a = indices[index];
@@ -3809,15 +3807,15 @@ Purpose: Low memory data structure for storing the linkages between the triangle
         c = indices[index + 2];
         facelink = new BDS.FaceLink();
         this._faceLinks.push(facelink);
-        edge_a = [b, c];
-        edge_b = [c, a];
-        edge_c = [a, b];
+        edge_a = this._l2s(b, c);
+        edge_b = this._l2s(c, a);
+        edge_c = this._l2s(a, b);
         link_a = map.get(edge_a);
         if (link_a) {
           facelink.a = link_a;
           map["delete"](edge_a);
         } else {
-          edge_a = [c, b];
+          edge_a = this._l2s(c, b);
           map.set(edge_a, facelink);
         }
         link_b = map.get(edge_b);
@@ -3825,19 +3823,22 @@ Purpose: Low memory data structure for storing the linkages between the triangle
           facelink.b = link_b;
           map["delete"](edge_b);
         } else {
-          edge_b = [a, c];
+          edge_b = this._l2s(a, c);
           map.set(edge_b, facelink);
         }
         link_c = map.get(edge_c);
         if (link_c) {
           facelink.c = link_c;
-          results.push(map["delete"](edge_c));
+          map["delete"](edge_c);
         } else {
-          edge_c = [b, a];
-          results.push(map.set(edge_c, facelink));
+          edge_c = this._l2s(b, a);
+          map.set(edge_c, facelink);
         }
       }
-      return results;
+    };
+
+    FaceLinkGraph.prototype._l2s = function(i1, i2) {
+      return "" + i1 + "_" + i2;
     };
 
     FaceLinkGraph.prototype.size = function() {

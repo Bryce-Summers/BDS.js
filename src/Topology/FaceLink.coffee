@@ -57,11 +57,12 @@ class BDS.FaceLinkGraph
     # int[]
     _build_from_indices: (indices) ->
 
+        debugger
         map = new Map()
 
         @_faceLinks = []
 
-        len = triangles.length
+        len = Math.floor(indices.length/3)
         for i in [0...len]
             index = i*3
 
@@ -76,16 +77,16 @@ class BDS.FaceLinkGraph
             # For all 3 sides, bidirectionally link this to those that have put an edge into the map,
             # else put the reverse edge into the map.
             # Because the indices are assumed to be well oriented, there is no need to create unique keys for both orientations.
-            edge_a = [b, c]
-            edge_b = [c, a]
-            edge_c = [a, b]
+            edge_a = @_l2s(b, c)
+            edge_b = @_l2s(c, a)
+            edge_c = @_l2s(a, b)
 
             link_a = map.get(edge_a)
             if link_a
                 facelink.a = link_a # Link if found.
                 map.delete(edge_a)
             else
-                edge_a = [c, b] # input link otherwise.
+                edge_a = @_l2s(c, b) # input link otherwise.
                 map.set(edge_a, facelink)
 
             link_b = map.get(edge_b)
@@ -93,7 +94,7 @@ class BDS.FaceLinkGraph
                 facelink.b = link_b
                 map.delete(edge_b)
             else
-                edge_b = [a, c]
+                edge_b = @_l2s(a, c) #[a, c]
                 map.set(edge_b, facelink)
 
             link_c = map.get(edge_c)
@@ -101,8 +102,13 @@ class BDS.FaceLinkGraph
                 facelink.c = link_c
                 map.delete(edge_c)
             else
-                edge_c = [b, a]
+                edge_c = @_l2s(b, a)
                 map.set(edge_c, facelink)
+
+        return
+
+    _l2s: (i1, i2) ->
+        return "" + i1 + "_" + i2
 
     size: () ->
         return @_faceLinks.length

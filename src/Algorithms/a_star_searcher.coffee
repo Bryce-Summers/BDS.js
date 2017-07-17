@@ -67,7 +67,7 @@ class BDS.AStarSearcher
         start.dist_to_goal  = @_search_graph.heuristic(start, goal)
         #start.previous     = null
 
-        end.dist_to_goal = 0
+        goal.dist_to_goal = 0
 
         frontier = new BDS.Heap([start], (a, b) -> a.dist_to_start + a.dist_to_goal <= b.dist_to_start + b.dist_to_goal)
 
@@ -77,18 +77,13 @@ class BDS.AStarSearcher
 
             if node == goal
                 node_path = @_tracePathBack(node)
-                @_clearVoxelSearchData()
+                @_clearNodeSearchData()
                 
                 pts = []
-                # Start at floating point position.
-                pts.push(start_position.clone())
 
-                # Points found at integer coordinates.
+                # Points found at graph locations.
                 for node in node_path
-                    pts.push(end_position.clone())
-
-                # End point at floating point position.
-                pts.push(new THREE.Vector3(xyz2.x, xyz2.y, xyz2.z))
+                    pts.push(node.position.clone())
 
                 return pts
 
@@ -113,7 +108,7 @@ class BDS.AStarSearcher
         console.log(" and ")
         console.log(goal)
         ###
-        @_clearVoxelSearchData()
+        @_clearNodeSearchData()
         return []
 
 
