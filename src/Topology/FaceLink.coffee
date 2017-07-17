@@ -57,7 +57,6 @@ class BDS.FaceLinkGraph
     # int[]
     _build_from_indices: (indices) ->
 
-        debugger
         map = new Map()
 
         @_faceLinks = []
@@ -70,9 +69,11 @@ class BDS.FaceLinkGraph
             b = indices[index + 1]
             c = indices[index + 2]
 
+            #debugger if (a == 0 or b == 0 or c == 0) and (a == 1 or b == 1 or c == 1)
+
             # Allocate this face and store it.
-            facelink = new BDS.FaceLink()
-            @_faceLinks.push(facelink)
+            faceLink = new BDS.FaceLink()
+            @_faceLinks.push(faceLink)
 
             # For all 3 sides, bidirectionally link this to those that have put an edge into the map,
             # else put the reverse edge into the map.
@@ -81,34 +82,61 @@ class BDS.FaceLinkGraph
             edge_b = @_l2s(c, a)
             edge_c = @_l2s(a, b)
 
-            link_a = map.get(edge_a)
-            if link_a
-                facelink.a = link_a # Link if found.
+            # Our linking scheme maps objects using association as follows:
+            # edge_string --> {faceLink:, type:},
+            # where edge string indicates an oriented edge.
+            #   edges are represented by pairs of indices such as (12, 35) or (x, y), where x any y are integers and
+            #   standardized strings of the form "12_35" or "x_y"
+            # links indicates a faceLink that contains the edge in a counter-closckwise orientation.
+            # and type indicates the vertice that the edge is across from.
+            # 
+            # These edges are never stored explicitly, rather they are used to glue the mesh together as link locations are found.
+            # In map edges are store in reverse orientation. They are found in normal orientation by the later facelinks that are searching.
+
+            # link_a = {faceLink:, type:}, defined if in map, undefined otherwise.
+            # Reversed linking information from a pre allocated faceLink to the current one being built.
+            edgeLink_a = map.get(edge_a)
+            if edgeLink_a
+                faceLink.a = edgeLink_a.faceLink # Link if found.
+                @_link(edgeLink_a, faceLink)
                 map.delete(edge_a)
             else
                 edge_a = @_l2s(c, b) # input link otherwise.
-                map.set(edge_a, facelink)
+                map.set(edge_a, {faceLink: faceLink, type:'a'})
 
-            link_b = map.get(edge_b)
-            if link_b
-                facelink.b = link_b
+            edgeLink_b = map.get(edge_b)
+            if edgeLink_b
+                faceLink.b = edgeLink_b.faceLink
+                @_link(edgeLink_b, faceLink)
                 map.delete(edge_b)
             else
                 edge_b = @_l2s(a, c) #[a, c]
-                map.set(edge_b, facelink)
+                map.set(edge_b, {faceLink: faceLink, type: 'b'})
 
-            link_c = map.get(edge_c)
-            if link_c
-                facelink.c = link_c
+            edgeLink_c = map.get(edge_c)
+            if edgeLink_c
+                faceLink.c = edgeLink_c.faceLink
+                @_link(edgeLink_c, faceLink)
                 map.delete(edge_c)
             else
                 edge_c = @_l2s(b, a)
-                map.set(edge_c, facelink)
+                map.set(edge_c, {faceLink: faceLink, type: 'c'})
 
         return
 
     _l2s: (i1, i2) ->
         return "" + i1 + "_" + i2
+
+    # Links the input facelink via the edge location type to the target faceLink.
+    # ({faceLink:, type:}, faceLink:)
+    _link: (edgeLink, target) ->
+        src  = edgeLink.faceLink
+        type = edgeLink.type
+
+        src.a = target if type == 'a'
+        src.b = target if type == 'b'
+        src.c = target if type == 'c'
+        return
 
     size: () ->
         return @_faceLinks.length

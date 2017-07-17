@@ -18,6 +18,7 @@ class BDS.Interface_Controller_All
     mouse_down: (event) ->
     mouse_up:   (event) ->
     mouse_move: (event) ->
+    mouse_wheel: (event) ->
 
     # Keyboard Input.
     key_down:(event) ->

@@ -81,6 +81,14 @@ class BDS.Controller_Group #extends BDS.Interface_Controller_All
             controller.mouse_move(event) if controller.isActive()
         return
 
+    mouse_wheel: (event) ->
+        len = @_mouse_input_controllers.length
+        for i in [0...len] by 1 #(var i = 0; i < len; i++)
+        
+            controller = @_mouse_input_controllers[i]
+            controller.mouse_wheel(event) if controller.isActive()
+        return        
+
 
     key_down:(event) ->
         len = @_keyboard_input_controllers.length

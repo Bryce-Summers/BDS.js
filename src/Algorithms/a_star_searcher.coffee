@@ -90,11 +90,13 @@ class BDS.AStarSearcher
             neighbors = @_search_graph.neighbors(node)
 
             for n in neighbors
-                new_dist = node.dist_to_start + 1
+
+                # add distance from node to this neighbor.
+                new_dist = node.dist_to_start + @_search_graph.heuristic(node, n)
                 # Expand the neighbor if a shorter path does not already exist to it.
                 # Goals are always expanded.
                 if new_dist < n.dist_to_start
-                    n.dist_to_start = Math.min(n.dist_to_start, node.dist_to_start + 1)
+                    n.dist_to_start = Math.min(n.dist_to_start, new_dist)
                     n.dist_to_goal  = @_search_graph.heuristic(start, goal) # FIXME: This may not need to be recomputed.
                     n.previous = node
                     frontier.add(n)
