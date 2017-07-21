@@ -84,12 +84,12 @@ Requires the use of data nodes n that have three fields availible:
         for (j = 0, len1 = neighbors.length; j < len1; j++) {
           n = neighbors[j];
           new_dist = node.dist_to_start + this._search_graph.heuristic(node, n);
+          this._node_set.add(n);
           if (new_dist < n.dist_to_start) {
             n.dist_to_start = Math.min(n.dist_to_start, new_dist);
             n.dist_to_goal = this._search_graph.heuristic(start, goal);
             n.previous = node;
             frontier.add(n);
-            this._node_set.add(n);
           }
         }
       }
@@ -122,14 +122,13 @@ Requires the use of data nodes n that have three fields availible:
     };
 
     AStarSearcher.prototype._clearNodeSearchData = function() {
-      var i, len, n, ref;
-      ref = this._node_set;
-      for (i = 0, len = ref.length; i < len; i++) {
-        n = ref[i];
-        n.dist_to_start = 2e308;
-        n.dist_to_goal = 2e308;
-        n.previous = null;
-      }
+      this._node_set.forEach((function(_this) {
+        return function(n) {
+          n.dist_to_start = 2e308;
+          n.dist_to_goal = 2e308;
+          return n.previous = null;
+        };
+      })(this));
       this._node_set.clear();
     };
 

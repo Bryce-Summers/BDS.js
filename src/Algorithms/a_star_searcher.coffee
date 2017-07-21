@@ -93,6 +93,8 @@ class BDS.AStarSearcher
 
                 # add distance from node to this neighbor.
                 new_dist = node.dist_to_start + @_search_graph.heuristic(node, n)
+                @_node_set.add(n)
+
                 # Expand the neighbor if a shorter path does not already exist to it.
                 # Goals are always expanded.
                 if new_dist < n.dist_to_start
@@ -100,7 +102,6 @@ class BDS.AStarSearcher
                     n.dist_to_goal  = @_search_graph.heuristic(start, goal) # FIXME: This may not need to be recomputed.
                     n.previous = node
                     frontier.add(n)
-                    @_node_set.add(n)
 
 
         # No legal path was found.
@@ -135,7 +136,8 @@ class BDS.AStarSearcher
 
     # Reverts all of the voxels to their initial search states.
     _clearNodeSearchData: () ->
-        for n in @_node_set
+
+        @_node_set.forEach (n) =>
             n.dist_to_start = Infinity
             n.dist_to_goal  = Infinity
             n.previous      = null
