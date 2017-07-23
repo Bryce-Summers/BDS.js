@@ -69,6 +69,7 @@ class BDS.Box
 
         return area
 
+    # True iff this box intersects the given box.
     intersects_box: (box) ->
         intersection = @intersect(box)
 
@@ -93,3 +94,21 @@ class BDS.Box
         # Closed, potentially filled polyline, with the coordinates of this box.
         polyline = new BDS.Polyline(true, points, @_isFilled)
         return polyline
+
+    ###
+    Ray Queries
+    ###
+
+    # Updates the rayQuery with an intersection with this triangle if found.
+    rayQueryMin: (rayQuery) ->
+
+    # Adds to the given rayQuery all intersections and times that are found.
+    rayQueryAll: (rayQuery) ->
+
+    # Updates rayQuery.time value if true,
+    # true if time found.
+    rayQueryTime: (rayQuery) ->
+
+    # Updates rayQuery.times[] value if true,
+    # true if at least 1 time is found.
+    rayQueryTimes: (rayQuery) ->

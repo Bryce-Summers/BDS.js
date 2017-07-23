@@ -1,11 +1,11 @@
 ###
-Geometry Super Class
+Geometry2D Super Class
 Written by Bryce Summers on 1 - 9 - 2017.
 
 This class abstract away many common procedures and specifies a common interface for algorithms on geometries.
 ###
 
-class BDS.Geometry
+class BDS.Geometry2D
 
     constructor: (@closed, @filled) ->
 
