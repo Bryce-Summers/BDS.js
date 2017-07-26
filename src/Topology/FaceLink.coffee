@@ -43,7 +43,7 @@ class BDS.FaceLink
         @b = null
         @c = null
 
-class BDS.FaceLinkGraph
+class BDS.FaceLinkGraph # FIXME: Shouls I rename this to be a facelink Mesh?
 
     constructor: (indices) ->
         @_faceLinks = null

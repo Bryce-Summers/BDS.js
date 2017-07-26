@@ -9,14 +9,8 @@
 #          Typically this will be used to feed the ray into BVH and other query structures.
 # - .isects, {obj:, time:} # the results of a query.
 #
-# Standard names and behaviors for ray query calls:
-#  -bool rayQueryMin(rayQuery) :  updates .min_time, .isect_obj, and .time, if a closer intersection is found,
-#                                 returns true iff an update has been made.
-#  -bool rayQueryTime(rayQuery) : stores the time of earliest intersection in .time, returns true iff an intersection was found.
-#
-# Future:
-# bool rayQueryTimes(rayQuery): .time = float[]
-# bool rayQueryAll(rayQuery): pushes isects and times for all intersections between the ray and the object, returns true if any were found.
+# Standard names and behaviors for ray query calls specified in BDS.RayQueryable
+
 
 class BDS.RayQuery
 
@@ -26,10 +20,13 @@ class BDS.RayQuery
 
     initialize: (ray) ->
         @ray = ray
-        @isects = []
+
         @min_time = Number.MAX_VALUE
 
-        @time = undefined
+        @obj   = undefined # Any object.
+        @objs  = [] # []
+        @time  = undefined # positive float.
+        @times = [] # positive float[].
 
     # Given an intersection time, @min_time is updated.
     updateMinTime: (new_time) ->

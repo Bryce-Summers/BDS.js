@@ -13,7 +13,7 @@
 #
 # FIXME: Implement Tree rebalancing functions: optimize () ->
 
-class BDS.BVH3D
+class BDS.BVH3D extends BDS.RayQueryable
 
     @MAX_OBJECTS_PER_LEAF = 4
 

@@ -57,6 +57,9 @@ class BDS.Point
         out.z /= s
         return out
 
+    toArray: () ->
+        return [@x, @y, @z]
+
     toString: () ->
         output = "Point(" + @x + ", " + @y
 
@@ -122,6 +125,12 @@ class BDS.Point
 
     dot: (pt) ->
         return pt.x*@x + pt.y*@y + pt.z*@z
+
+    # Returns this cross other.
+    # i.e. the direction perpendicular to the place including this and the other directions
+    # in the orientation dictated by the right hand rule.
+    cross: (o) ->
+        return new BDS.Point(@y*o.z - @z*o.y, @z*o.x - @x*o.z, @x*o.y - @y*o.x)
 
     # returns true iff this point is less than the input point on every dimension.
     lessThan: (pt) ->
