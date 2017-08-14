@@ -24,6 +24,11 @@ class BDS.Point
     clone: () ->
         return new BDS.Point(@x, @y, @z)
 
+    # Instantiate a pt from any .x,.y,.z set.
+    @newFrom: (pt) ->
+        out = new BDS.Point(pt.x, pt.y, pt.z)
+        return out
+
     copyFrom: (pt) ->
         @x = pt.x
         @y = pt.y

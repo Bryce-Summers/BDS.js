@@ -31,13 +31,36 @@ class BDS.Triangle extends BDS.RayQueryable
         @b_index = undefined
         @c_index = undefined
 
+        # @_obj # Associated Data.
+        # @_normal
+
+    @from_abc_triangle: (tri) ->
+        return new BDS.Triangle(tri.a, tri.b, tri.c)
+
+    setAssociatedData: (obj) ->
+        @_obj = obj
+        return
+
+    getAssociatedData: () ->
+        return @_obj
+
     setIndices: (i1, i2, i3) ->
         @a_index = i1
         @b_index = i2
         @c_index = i3
 
+    normal: () ->
+        if @_normal
+            return @_normal
+
+        ac = @c.clone().sub(@a)
+        ab = @b.clone().sub(@a)
+        @_normal = ac.cross(ab)
+
+        return @_normal
+
     computeCentroid: () ->
-        return @a.clone.add(@b).add(@c).divideScalar(3)
+        return @a.clone().add(@b).add(@c).divideScalar(3)
 
     ensureBoundingBox: () ->
         if @aabb == null
@@ -143,7 +166,7 @@ class BDS.Triangle extends BDS.RayQueryable
         qvec = tvec.cross(e1)
         v = dir.dot(qvec) * inv_det
         if v < 0 or u + v > 1
-            return 0
+            return null
 
         time = e2.dot(qvec) * inv_det
         return {time:time, u:u, v:v}

@@ -400,7 +400,7 @@ class BDS.BVH3D extends BDS.RayQueryable
 
         # Check children.
         left_AABB  = @_left._AABB
-        right_AABB = @_right.AABB
+        right_AABB = @_right._AABB
 
         # We check AABB's precall to avoid duplicated checks.
         # This means that the root node doesn't get checked, 

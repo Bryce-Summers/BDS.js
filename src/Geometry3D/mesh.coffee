@@ -24,8 +24,9 @@ class BDS.Mesh extends BDS.RayQueryable
     # INPUT: A parameter object indicating any of the following input representations:
     # 1. INPUT: {.vertices, .face_indices}, BDS.Point[] (size n), int[] (size 3n)
     # 2. INPUT: {.triangles} BDS.Triangle[] (triangles should ideally contain face index information)
+    # 3. INPUT: {.abc_triangles, .face_indices} {.a, .b, .c}[] (triangle objects), int[] (size 3n)
     # Data Structure Parameters. {type:default_values}
-    # {soup:true, bvh:false, faceLink:false, halfedge:false, triangles:false}
+    # {soup:true, bvh:false, faceLink:false, halfedge:false}
     constructor: (params) ->
 
         # -- Initialize all data structure fields.
@@ -34,14 +35,13 @@ class BDS.Mesh extends BDS.RayQueryable
         # Good for static rendering, not as good for dynamically modifiable meshes.
         @_vertices     = null
         @_face_indices = null
-        @_triangles    = null
+        @_triangles    = null # Somewhat necessary for bvh's, faceLinks, ...
 
         # Bounding Volume Hiearchy
         @_bvh = null
 
         # faceLink structure.
         @_faceLink = null
-
 
         # Keep around the Polygon soup if so desired.
         if params.soup
@@ -53,7 +53,7 @@ class BDS.Mesh extends BDS.RayQueryable
         if params.bvh
             
             triangles = @_getInputTriangles(params)
-            @_bvh = new BDS.BVH(triangles)
+            @_bvh = new BDS.BVH3D(triangles)
 
         # Halfedge Mesh.
         if params.halfedge
@@ -65,15 +65,49 @@ class BDS.Mesh extends BDS.RayQueryable
         if params.faceLink
             @_faceLink = new BDS.FaceLinkGraph(params.face_indices)
 
+
+    ###
+    Public Interface
+    ###
+
+    getFaceLink: () ->
+        return @_faceLink
+
+    getTriangles: () ->
+        return @_triangles
+
+    ###
+    Private Helper Functions.
+    ###
+
     # Returns a set of triangles, that can be used to facillitate constructing the input.
     _getInputTriangles: (params) ->
-        triangles = params.triangles
-        triangles = @_triangles if not triangles
+        # Set triangles.
+        triangles = @_triangles
+        triangles = params.triangles if not triangles
+
+        # Convert a list of abc triangle sets into a list of Bryce Data Structure Triangles.
+        if not triangles and params.abc_triangles and params.face_indices
+            triangles = []
+            len = params.abc_triangles.length
+            for i in [0...len]
+                tri = params.abc_triangles[i]
+                triangle = BDS.Triangle.from_abc_triangle(tri)
+
+                index_a = params.face_indices[3*i + 0]
+                index_b = params.face_indices[3*i + 1]
+                index_c = params.face_indices[3*i + 2]
+
+                triangle.setIndices(index_a, index_b, index_c)
+                triangles.push(triangle)
+
         if not triangles
             vertices  = params.vertices
             faces     = params.face_indices
             triangles = BDS.Mesh.construct_triangles(params.vertices, params.face_indices)
-        params.triangles = triangles
+
+        # Store triangles for later.
+        @_triangles = triangles
         return triangles
 
 
@@ -102,6 +136,18 @@ class BDS.Mesh extends BDS.RayQueryable
         return output
  
     # See BDS.RayQueryable
+
+    ensure_bvh: () ->
+        return true if @_bvh 
+
+
+        if @_triangles
+            @_bvh = new BDS.BVH3D(triangles)
+            return true
+
+        console.error("BDS.Mesh: Queries not supported without BVH generation. No triangles found to fix the problem.")
+        return false
+
 
     rayQueryMin: (rayQuery) ->
 

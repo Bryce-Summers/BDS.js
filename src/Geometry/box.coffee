@@ -224,6 +224,9 @@ class BDS.Box extends BDS.RayQueryable
         # that we may check for intersections.
         candidatePlane = [0, 0, 0]
 
+        # The Intersection Location.
+        coord = [0, 0, 0]
+
         # Determine which quadrant our origin is in.
         # This dictates the planes that it could potentially intersect.
         for i in [0...NUMDIM] by 1
@@ -276,8 +279,7 @@ class BDS.Box extends BDS.RayQueryable
             if whichPlane != i
                 coord[i] = origin[i] + maxT[whichPlane]*dir[i]
 
-                # Note: check doesn't need bounds checking,
-                # because these are not the dimension that the point is exactly intersecting
+                # No intersectionn if the intersection point is off of the bounding box.
                 if coord[i] < minB[i] or coord[i] > maxB[i]
                     return false
             else

@@ -32,7 +32,7 @@ class BDS.Ray
 
     # Gurantted to return a normalized direction vector.
     getDirection: () ->
-        return @dir
+        return @dir.clone()
 
     # Returns the right Perpendicular.
     # Normalized.
