@@ -26,7 +26,7 @@ class BDS.Mesh extends BDS.RayQueryable
     # 2. INPUT: {.triangles} BDS.Triangle[] (triangles should contain face index information)
     # 3. INPUT: {.abc_triangles, .face_indices} {.a, .b, .c}[] (triangle objects), int[] (size 3n)
     # Data Structure Parameters. {type:default_values}
-    # {soup:true, bvh:false, faceLink:false, halfedge:false}
+    # {soup:true, bvh:false, faceLink:false, halfedge:false, triangle_list:false}
     constructor: (params) ->
 
         # -- Initialize all data structure fields.
@@ -64,6 +64,10 @@ class BDS.Mesh extends BDS.RayQueryable
         # FaceLinkGraph.
         if params.faceLink
             @_faceLink = new BDS.FaceLinkGraph(params.face_indices)
+
+        # Ensure that the triangle list is generated if prompted.
+        if params.triangle_list
+            @_triangles = @_getInputTriangles(params)
 
     ###
     Public Interface
