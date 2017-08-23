@@ -2565,6 +2565,9 @@ Written by Bryce Summers on Aug.22.2017
       if (params.faceLink) {
         this._faceLink = new BDS.FaceLinkGraph(params.face_indices);
       }
+      if (params.triangle_list) {
+        this._triangles = this._getInputTriangles(params);
+      }
     }
 
 
