@@ -152,7 +152,7 @@ class BDS.Box extends BDS.RayQueryable
         # then the ray starts in the box and we treat the start as the enter time.
 
         # Find the exit time.
-        exit_search = @_opposite_ray(rayQuery.ray, new_time)
+        exit_search = @_exit_ray(rayQuery.ray, enter_time)
         exit_ray  = exit_search.ray
         exit_time = exit_search.origin_time - @_isect_ray(exit_ray)
 
@@ -160,7 +160,7 @@ class BDS.Box extends BDS.RayQueryable
         rayQuery.times.push(enter_time)
         rayQuery.times.push(exit_time)
 
-        return false
+        return true
 
 
     # INPUT:  ray, time ray enters this box.
@@ -176,10 +176,10 @@ class BDS.Box extends BDS.RayQueryable
 
         new_time  = enter_time + max_distance_in_box_lower_bound
         origin    = ray.getPointAtTime(new_time)
-        direction = ray.getDirection.mult(-1)
+        direction = ray.getDirection().multScalar(-1)
 
         new_ray = new BDS.Ray(origin, direction)
-        return {ray: new_ray, time:new_time}
+        return {ray: new_ray, origin_time:new_time}
 
     # An overestimate and upper bound on the minnimum distance a ray can travel
     # through the box and be guranteed to have gone through the entire box.
@@ -193,7 +193,7 @@ class BDS.Box extends BDS.RayQueryable
     # FIXME: Determine whether the bounding box is filled or unfilled.
     # At the moment a ray starting within a box assumes filled and returns its starting point.
 
-    # OUTPUT: time
+    # OUTPUT: time, -1 if not found.
     _isect_ray: (ray) ->
 
         # We convert all relevant fields into arrays to more
@@ -281,7 +281,7 @@ class BDS.Box extends BDS.RayQueryable
 
                 # No intersectionn if the intersection point is off of the bounding box.
                 if coord[i] < minB[i] or coord[i] > maxB[i]
-                    return false
+                    return -1
             else
                 # Set coordinate exactly on the plane.
                 coord[i] = candidatePlane[i]

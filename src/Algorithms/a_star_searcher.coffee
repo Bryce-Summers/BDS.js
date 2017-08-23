@@ -28,7 +28,7 @@ class BDS.SearchGraph
     # 3. A neighbor relationship on the graph.
 
     # World location to node location. Usually the nearest node.
-    # THREE.Vector3 --> Node.
+    # BDS.Point --> Node.
     #getNodeNearPosition: (start_position) -> @_error() # Implement this in a child class!
 
     # Returns an admissible and consistent heuristic over the search space.
@@ -52,7 +52,7 @@ class BDS.AStarSearcher
         @_search_graph = search_graph
 
     # Using A* search, finds a path from position1 to position2
-    # INPUT: THREE.Vector3, THREE.Vector3
+    # INPUT: BDS.Point, BDS.Point
     # OUTPUT: A list of positions at and connected by the nodes in the search space.
     # The first position will be the on given, the last will be the end position given.
     a_star_search: (start_node, end_node) ->

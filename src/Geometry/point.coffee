@@ -77,7 +77,9 @@ class BDS.Point
 
     # Returns the euclidean distance from this point to the given point.
     distanceTo: (pt) ->
-        return pt.sub(@).norm()
+        pt = pt.sub(@)
+        debugger if not pt.norm
+        return pt.norm()
 
     directionTo: (pt) ->
         return pt.sub(@).normalize()

@@ -28,6 +28,9 @@ class BDS.RayQuery
         @time  = undefined # positive float.
         @times = [] # positive float[].
 
+    reset: () ->
+        @initialize(@ray)
+
     # Given an intersection time, @min_time is updated.
     updateMinTime: (new_time) ->
 

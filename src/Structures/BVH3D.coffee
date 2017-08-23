@@ -427,15 +427,18 @@ class BDS.BVH3D extends BDS.RayQueryable
         # Min time is before this branch.
         return false if min_time < enter_left and min_time < enter_right
 
-        # Prune right branch.
-        if min_time < enter_right
+        # This logic is funky. It needs to be fixed.
+        # If we can prune one of the branches, we can directly go down the other singular path.
+
+        # If we can purne right, but not left, go directly to left branch.
+        if enter_left < min_time and min_time < enter_right
             return @_left.rayQueryMin(rayQuery) # Recursion.
 
-        # Prune left branch.
-        if min_time < enter_left
+        # If we can prune left, but not right, go directly to the right branch.
+        if enter_right < min_time and min_time < enter_left
             return @_right.rayQueryMin(rayQuery) # Recursion.
 
-        # Sort nodes and transverse from closer to furthest.
+        # If neither are pruned, then we transverse nodes from closer to furthest.
         if enter_left < enter_right
             near_node = @_left
             far_node  = @_right
@@ -483,7 +486,7 @@ class BDS.BVH3D extends BDS.RayQueryable
         # Broad-phase collision detection,
     
         # Early out if ray doesn't intersect this AABB.
-        if not @_AABB.rayQueryTimes(rayQuery)# times, to save on unneccesary minimization.
+        if @_AABB.rayQueryTimes(rayQuery).length # times, to save on unneccesary minimization.
             return false
 
         found = false

@@ -23,9 +23,9 @@ class BDS.Triangle extends BDS.RayQueryable
 
     constructor: (a, b, c) ->
 
-        @a = a.clone()
-        @b = b.clone()
-        @c = c.clone()
+        @a = a.clone() # BDS.Point
+        @b = b.clone() # BDS.Point
+        @c = c.clone() # BDS.Point
 
         @a_index = undefined
         @b_index = undefined
@@ -35,7 +35,10 @@ class BDS.Triangle extends BDS.RayQueryable
         # @_normal
 
     @from_abc_triangle: (tri) ->
-        return new BDS.Triangle(tri.a, tri.b, tri.c)
+        a = BDS.Point.newFrom(tri.a)
+        b = BDS.Point.newFrom(tri.b)
+        c = BDS.Point.newFrom(tri.c)
+        return new BDS.Triangle(a, b, c)
 
     setAssociatedData: (obj) ->
         @_obj = obj
@@ -60,7 +63,10 @@ class BDS.Triangle extends BDS.RayQueryable
         return @_normal
 
     computeCentroid: () ->
-        return @a.clone().add(@b).add(@c).divideScalar(3)
+        pt = @a.clone().add(@b).add(@c)
+        if not pt.divScalar
+            debugger
+        return pt.divScalar(3)
 
     ensureBoundingBox: () ->
         if @aabb == null

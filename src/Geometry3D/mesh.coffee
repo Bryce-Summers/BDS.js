@@ -23,7 +23,7 @@ class BDS.Mesh extends BDS.RayQueryable
     # ASSUMPTION: The inputs contain private allocated data?
     # INPUT: A parameter object indicating any of the following input representations:
     # 1. INPUT: {.vertices, .face_indices}, BDS.Point[] (size n), int[] (size 3n)
-    # 2. INPUT: {.triangles} BDS.Triangle[] (triangles should ideally contain face index information)
+    # 2. INPUT: {.triangles} BDS.Triangle[] (triangles should contain face index information)
     # 3. INPUT: {.abc_triangles, .face_indices} {.a, .b, .c}[] (triangle objects), int[] (size 3n)
     # Data Structure Parameters. {type:default_values}
     # {soup:true, bvh:false, faceLink:false, halfedge:false}
@@ -65,7 +65,6 @@ class BDS.Mesh extends BDS.RayQueryable
         if params.faceLink
             @_faceLink = new BDS.FaceLinkGraph(params.face_indices)
 
-
     ###
     Public Interface
     ###
@@ -87,6 +86,7 @@ class BDS.Mesh extends BDS.RayQueryable
         triangles = params.triangles if not triangles
 
         # Convert a list of abc triangle sets into a list of Bryce Data Structure Triangles.
+        # Face indices are required, because abc triangles are assumed to not be BDS.Triangles.
         if not triangles and params.abc_triangles and params.face_indices
             triangles = []
             len = params.abc_triangles.length
