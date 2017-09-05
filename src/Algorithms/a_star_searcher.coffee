@@ -32,8 +32,12 @@ class BDS.SearchGraph
     #getNodeNearPosition: (start_position) -> @_error() # Implement this in a child class!
 
     # Returns an admissible and consistent heuristic over the search space.
+    # This may be weighted to implement weighted A*.
     # NODE, NODE --> Float.
     heuristic: (loc, goal) -> @_error() # Implement this in a child class!
+
+    # Returns a consistent heuristic.
+    distance: (loc, goal) -> @_error() # Implement this in a child class!
 
     # Returns all of the orthogonal neighbors to the given node.
     neighbors: (node) -> @_error() # Implement this in a child class!
@@ -55,7 +59,9 @@ class BDS.AStarSearcher
     # INPUT: BDS.Point, BDS.Point
     # OUTPUT: A list of positions at and connected by the nodes in the search space.
     # The first position will be the on given, the last will be the end position given.
-    a_star_search: (start_node, end_node) ->
+    # OUTPUT2: If return nodes is defined and true, this function returns a list of nodes
+    #          This may be useful for geometric queries.
+    a_star_search: (start_node, end_node, return_nodes) ->
 
         start = start_node
         goal  = end_node
@@ -81,6 +87,9 @@ class BDS.AStarSearcher
                 
                 pts = []
 
+                if return_nodes
+                    return node_path
+
                 # Points found at graph locations.
                 for node in node_path
                     pts.push(node.position.clone())
@@ -92,7 +101,7 @@ class BDS.AStarSearcher
             for n in neighbors
 
                 # add distance from node to this neighbor.
-                new_dist = node.dist_to_start + @_search_graph.heuristic(node, n)
+                new_dist = node.dist_to_start + @_search_graph.distance(node, n)
                 @_node_set.add(n)
 
                 # Expand the neighbor if a shorter path does not already exist to it.

@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 23-08-2017
+ *  Single File concatenated by Grunt Concatenate on 05-09-2017
  */
 /*
  * Defines namespaces.
@@ -129,6 +129,10 @@ Requires the use of data nodes n that have three fields availible:
       return this._error();
     };
 
+    SearchGraph.prototype.distance = function(loc, goal) {
+      return this._error();
+    };
+
     SearchGraph.prototype.neighbors = function(node) {
       return this._error();
     };
@@ -147,7 +151,7 @@ Requires the use of data nodes n that have three fields availible:
       return this._search_graph = search_graph;
     };
 
-    AStarSearcher.prototype.a_star_search = function(start_node, end_node) {
+    AStarSearcher.prototype.a_star_search = function(start_node, end_node, return_nodes) {
       var frontier, goal, i, j, len, len1, n, neighbors, new_dist, node, node_path, pts, start;
       start = start_node;
       goal = end_node;
@@ -165,6 +169,9 @@ Requires the use of data nodes n that have three fields availible:
           node_path = this._tracePathBack(node);
           this._clearNodeSearchData();
           pts = [];
+          if (return_nodes) {
+            return node_path;
+          }
           for (i = 0, len = node_path.length; i < len; i++) {
             node = node_path[i];
             pts.push(node.position.clone());
@@ -174,7 +181,7 @@ Requires the use of data nodes n that have three fields availible:
         neighbors = this._search_graph.neighbors(node);
         for (j = 0, len1 = neighbors.length; j < len1; j++) {
           n = neighbors[j];
-          new_dist = node.dist_to_start + this._search_graph.heuristic(node, n);
+          new_dist = node.dist_to_start + this._search_graph.distance(node, n);
           this._node_set.add(n);
           if (new_dist < n.dist_to_start) {
             n.dist_to_start = Math.min(n.dist_to_start, new_dist);
