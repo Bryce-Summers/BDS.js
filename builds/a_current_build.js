@@ -1,5 +1,5 @@
 /*! Bryce Data Structures, a project by Bryce Summers.
- *  Single File concatenated by Grunt Concatenate on 05-09-2017
+ *  Single File concatenated by Grunt Concatenate on 30-09-2017
  */
 /*
  * Defines namespaces.
