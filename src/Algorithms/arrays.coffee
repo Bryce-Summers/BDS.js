@@ -10,6 +10,7 @@ BDS.Arrays.swap = (array, i1,i2) ->
 
 # Returns the index of the highest element in the array that is
 # less than or equal to the target element.
+# -1 if all elements are higher than the target element.
 # NOTEs on comparators:
 # Used to impose an orderings,
 # comparator = (e1, e2) -> Returns true if e1 <= e2.
